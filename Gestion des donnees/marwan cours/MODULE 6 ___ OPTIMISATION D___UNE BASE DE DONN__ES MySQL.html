@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Module 6 — Optimisation d'une base MySQL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- (Optionnel) Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #111827;
+            --bg-softer: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-2: #a855f7;
+            --accent-2-soft: rgba(168, 85, 247, 0.12);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+            --card: #020617;
+            --code-bg: #020617;
+            --tag-bg: #1e293b;
+            --success: #22c55e;
+            --danger: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #020617 50%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+        }
+
+        /* ====== LAYOUT AVEC SIDEPANEL ====== */
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.95fr);
+            gap: 1.8rem;
+            align-items: flex-start;
+            margin-top: 1.8rem;
+        }
+
+        .main-content {
+            min-width: 0;
+        }
+
+        .side-panel {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            padding: 1rem 1.1rem 1.2rem;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+        }
+
+        .side-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .side-chip span.icon {
+            font-size: 0.95rem;
+        }
+
+        .side-subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin: 0 0 0.6rem;
+        }
+
+        .side-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.15rem;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.28rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: #e5e7eb;
+            text-decoration: none;
+            transition: background 0.16s ease, transform 0.1s ease;
+        }
+
+        .toc-link:hover {
+            background: rgba(56, 189, 248, 0.14);
+            transform: translateY(-0.5px);
+        }
+
+        .toc-link.active {
+            background: rgba(56, 189, 248, 0.24);
+        }
+
+        .toc-badge {
+            min-width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            color: var(--muted);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .side-panel {
+                position: static;
+                max-height: none;
+                margin-top: 1rem;
+            }
+        }
+
+        /* ====== STYLES GÉNÉRAUX ====== */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .badge span.icon {
+            font-size: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 3vw, 2.4rem);
+            margin: 0.8rem 0 0.5rem;
+            background: linear-gradient(to right, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .tag-row {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--tag-bg);
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #111827, #020617);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        h2.section-title {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2.section-title span.label {
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        h2.section-title span.label.expert {
+            background: var(--accent-2-soft);
+            color: var(--accent-2);
+        }
+
+        .section {
+            margin-top: 0.75rem;
+        }
+
+        .lesson {
+            margin-top: 1.3rem;
+            padding: 1.1rem 1.1rem 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .lesson-header {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .lesson-header span.bullet {
+            font-size: 0.9rem;
+        }
+
+        .lesson p {
+            margin: 0.3rem 0;
+            font-size: 0.92rem;
+        }
+
+        ul, ol {
+            margin: 0.3rem 0 0.3rem 1.4rem;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin: 0.1rem 0;
+        }
+
+        .code-block {
+            margin-top: 0.6rem;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at top, #020617, #020617 45%, #020617);
+            padding: 0.7rem 0.8rem;
+            position: relative;
+            font-size: 0.83rem;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.7rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        pre {
+            margin: 0.4rem 0 0 0;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            white-space: pre;
+        }
+
+        code {
+            font-family: inherit;
+        }
+
+        .table-wrap {
+            margin-top: 0.6rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.45rem 0.6rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .recap {
+            margin-top: 1.5rem;
+            padding: 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .recap-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--success);
+        }
+
+        .recap ul {
+            margin: 0.3rem 0 0.2rem 1.2rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .mt-small {
+            margin-top: 0.4rem;
+        }
+
+        /* Impression : on masque la sidepanel */
+        @media print {
+            body {
+                background: #ffffff !important;
+            }
+            .page {
+                padding: 0;
+            }
+            .layout {
+                display: block;
+            }
+            .side-panel {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <div class="badge">
+        <span class="icon">🎯</span> MODULE 6 — OPTIMISATION D’UNE BASE DE DONNÉES MySQL
+    </div>
+    <h1>OPTIMISATION D’UNE BASE DE DONNÉES MySQL</h1>
+    <p class="subtitle">
+        Économiser les ressources, accélérer les requêtes et préparer ton application à monter en charge.
+    </p>
+    <div class="tag-row">
+        <span class="tag">MySQL</span>
+        <span class="tag">Performance</span>
+        <span class="tag">Index</span>
+        <span class="tag">Optimisation</span>
+    </div>
+
+    <div class="layout">
+        <!-- Contenu principal -->
+        <div class="main-content">
+
+            <!-- Intro cards -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟦 PARTIE A — NIVEAU DÉBUTANT
+                        </div>
+                        <div class="level-pill">
+                            ⭐ Niveau débutant
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Comprendre pourquoi optimiser MySQL, éviter les pièges classiques, découvrir les index et EXPLAIN.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟪 PARTIE B — NIVEAU EXPERT
+                        </div>
+                        <div class="level-pill">
+                            🚀 Niveau expert
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Types d’index, stratégie d’indexation, EXPLAIN avancé, optimisation de JOIN, structure et serveur MySQL.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PARTIE A — Débutant -->
+            <h2 class="section-title" id="partie-a">
+                <span class="label">Débutant</span>
+                <span>🟦 PARTIE A — NIVEAU DÉBUTANT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Pourquoi optimiser MySQL ? -->
+                <div class="lesson" id="a1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Pourquoi optimiser MySQL ?</span>
+                    </div>
+                    <p>Parce que :</p>
+                    <ul>
+                        <li>Un site lent fait fuir les utilisateurs</li>
+                        <li>Une requête mal écrite peut multiplier les coûts par 100</li>
+                        <li>Les performances chutent quand les données augmentent</li>
+                        <li>Un système non optimisé consomme trop de RAM / CPU</li>
+                    </ul>
+                    <p class="mt-small">
+                        MySQL peut aller <strong>TRÈS vite</strong>…<br />
+                        👉 mais uniquement si tu l’aides un peu.
+                    </p>
+                </div>
+
+                <!-- 2. Les 9 règles d’or -->
+                <div class="lesson" id="a2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Les 9 règles d’or (simples mais puissantes)</span>
+                    </div>
+                    <p>D’après le document OFPPT :</p>
+
+                    <ul>
+                        <li>
+                            <strong>✔ 1. Éviter <code>SELECT *</code></strong><br />
+                            Pourquoi ?<br />
+                            → Charge inutile<br />
+                            → Empêche l’utilisation de certains index<br />
+                            → Rend les requêtes plus lourdes<br />
+                            <span class="mt-small">À faire :</span>
+                        </li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT id, nom, prix
+FROM produit;
+</code></pre>
+                    </div>
+
+                    <ul>
+                        <li class="mt-small">
+                            <strong>✔ 2. Éviter <code>WHERE … IN (...)</code> si la liste est grande</strong><br />
+                            Préférer <code>EXISTS</code>, plus rapide :
+                        </li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT *
+FROM produit p
+WHERE EXISTS (
+    SELECT 1
+    FROM categorie c
+    WHERE c.id = p.id_cat
+);
+</code></pre>
+                    </div>
+
+                    <ul>
+                        <li class="mt-small">
+                            <strong>✔ 3. Ne pas utiliser de fonctions dans <code>WHERE</code></strong><br />
+                            Exemple lent :
+                        </li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>WHERE UPPER(nom) = 'ALI'  -- lent
+</code></pre>
+                    </div>
+                    <p>MySQL ne peut pas utiliser l’index.</p>
+                    <p>À faire :</p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>WHERE nom = 'Ali'  -- rapide
+</code></pre>
+                    </div>
+
+                    <ul>
+                        <li class="mt-small">
+                            <strong>✔ 4. Éviter les <code>LIKE</code> commençant par <code>%</code></strong><br />
+                        </li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>WHERE nom LIKE '%ali'   -- Très lent ❌
+</code></pre>
+                    </div>
+                    <p>
+                        Car MySQL ne peut pas savoir où rechercher.<br />
+                        À faire :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>WHERE nom LIKE 'Ali%'   -- rapide ✔
+</code></pre>
+                    </div>
+
+                    <ul>
+                        <li class="mt-small">
+                            <strong>✔ 5. Utiliser <code>INNER JOIN</code> plutôt que <code>LEFT JOIN</code> quand possible</strong><br />
+                            Les <code>LEFT JOIN</code> sont toujours plus lourds.
+                        </li>
+                        <li>
+                            <strong>✔ 6. Éviter <code>ORDER BY</code> inutile</strong><br />
+                            Le tri est très coûteux.
+                        </li>
+                        <li>
+                            <strong>✔ 7. Éviter <code>DISTINCT</code> sauf si indispensable</strong><br />
+                            Beaucoup pensent que <code>DISTINCT</code> sert “à nettoyer”. ❌<br />
+                            → Il faut corriger la requête, pas masquer le problème.
+                        </li>
+                        <li>
+                            <strong>✔ 8. Attention au “problème N+1”</strong><br />
+                            Si tu fais une requête SELECT dans une boucle :<br />
+                            ❌ 1 requête principale + 100 petites requêtes → tueur de performances.
+                        </li>
+                        <li>
+                            <strong>✔ 9. Utiliser les requêtes préparées</strong><br />
+                            Elles permettent à MySQL de garder un plan d’exécution en mémoire.
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 3. Requêtes préparées -->
+                <div class="lesson" id="a3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Les requêtes préparées (<code>PREPARE</code>)</span>
+                    </div>
+                    <p><strong>Extrait OFPPT :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>PREPARE stmt1 FROM
+'SELECT id, designation
+ FROM produit
+ WHERE id = ?';
+
+SET @id = 999;
+EXECUTE stmt1 USING @id;
+
+DEALLOCATE PREPARE stmt1;
+</code></pre>
+                    </div>
+                    <p class="mt-small"><strong>Avantages :</strong></p>
+                    <ul>
+                        <li>✔ optimisation interne</li>
+                        <li>✔ protège contre les injections SQL</li>
+                        <li>✔ réduit la charge réseau</li>
+                    </ul>
+                </div>
+
+                <!-- 4. Intro index -->
+                <div class="lesson" id="a4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Introduction aux index (concept simple)</span>
+                    </div>
+                    <p>
+                        Un index est comme l’index d’un livre :
+                    </p>
+                    <ul>
+                        <li>→ il permet à MySQL d’aller directement à l’endroit voulu</li>
+                        <li>→ au lieu de lire toutes les lignes</li>
+                    </ul>
+                    <p class="mt-small"><strong>Sans index :</strong><br />
+                        MySQL lit TOUTE la table (<em>table scan</em>) 😱
+                    </p>
+                    <p class="mt-small"><strong>Avec index :</strong><br />
+                        MySQL va directement au bon emplacement ✔
+                    </p>
+                </div>
+
+                <!-- 5. Créer un index -->
+                <div class="lesson" id="a5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Créer un index (simple)</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE INDEX idx_clients_adresse
+ON clients(adresse);
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">Index unique :</p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE UNIQUE INDEX idx_email
+ON clients(email);
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. Quand créer un index -->
+                <div class="lesson" id="a6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Quand créer un index ?</span>
+                    </div>
+                    <p>Créer un index sur une colonne :</p>
+                    <ul>
+                        <li>✔ utilisée dans <code>WHERE</code></li>
+                        <li>✔ utilisée dans <code>ORDER BY</code></li>
+                        <li>✔ utilisée dans <code>INNER JOIN</code></li>
+                        <li>✔ très filtrante (email, id, ville, etc.)</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Ne pas indexer :</strong></p>
+                    <ul>
+                        <li>colonnes à faibles valeurs distinctes (H/F, oui/non)</li>
+                        <li>colonnes rarement utilisées</li>
+                        <li>champs <code>TEXT</code> très grands</li>
+                    </ul>
+                </div>
+
+                <!-- 7. Vérifier index via EXPLAIN -->
+                <div class="lesson" id="a7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Comment vérifier si une requête utilise un index ?</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>EXPLAIN
+SELECT *
+FROM clients
+WHERE adresse = 'Agadir';
+</code></pre>
+                    </div>
+                    <p class="mt-small">
+                        Très important pour diagnostiquer les lenteurs.
+                    </p>
+                </div>
+
+                <!-- Récap débutant -->
+                <div class="recap" id="a-recap">
+                    <div class="recap-title">
+                        🟦 Résumé Débutant
+                    </div>
+                    <p>Tu sais maintenant :</p>
+                    <ul>
+                        <li>✔ pourquoi optimiser MySQL (performance, RAM/CPU, montée en charge)</li>
+                        <li>✔ appliquer les 9 règles d’or (SELECT *, LIKE, DISTINCT, N+1, etc.)</li>
+                        <li>✔ utiliser les requêtes préparées</li>
+                        <li>✔ ce qu’est un index et comment le créer</li>
+                        <li>✔ quand indexer une colonne</li>
+                        <li>✔ utiliser <code>EXPLAIN</code> pour voir si un index est utilisé</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- PARTIE B — Expert -->
+            <h2 class="section-title" id="partie-b">
+                <span class="label expert">Expert</span>
+                <span>🟪 PARTIE B — NIVEAU EXPERT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Types d'index -->
+                <div class="lesson" id="b1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Les différents types d’index</span>
+                    </div>
+                    <p>D’après ton document :</p>
+                    <ul>
+                        <li>
+                            <strong>✔ B-Tree Index</strong><br />
+                            → Le plus courant<br />
+                            → Pour la majorité des requêtes
+                        </li>
+                        <li>
+                            <strong>✔ FULLTEXT Index</strong><br />
+                            → Pour la recherche de texte longue<br />
+                            → Exemple : blog, produits, articles
+                        </li>
+                        <li>
+                            <strong>✔ SPATIAL Index</strong><br />
+                            → Données géographiques (cartes, GPS)
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 2. Clusterisé vs non -->
+                <div class="lesson" id="b2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Index clusterisé vs non clusterisé</span>
+                    </div>
+                    <ul>
+                        <li>
+                            <strong>✔ L’index PRIMARY est clusterisé</strong><br />
+                            → organise physiquement les données selon la clé primaire<br />
+                            → très rapide pour les recherches par ID
+                        </li>
+                        <li class="mt-small">
+                            <strong>✔ Les autres index sont secondaires</strong><br />
+                            → pointent vers les lignes réelles (double accès)
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 3. Stratégie d’indexation -->
+                <div class="lesson" id="b3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Stratégie d’indexation professionnelle</span>
+                    </div>
+                    <ul>
+                        <li>✔ Index sur clé primaire</li>
+                        <li>✔ Index sur colonnes utilisées dans <code>WHERE</code></li>
+                        <li>✔ Index unique sur email / username</li>
+                        <li>✔ Index multi-colonnes quand la requête filtre sur plusieurs champs</li>
+                        <li>✔ Attention : trop d’index = <code>INSERT/UPDATE/DELETE</code> plus lents</li>
+                    </ul>
+                </div>
+
+                <!-- 4. Index multi-colonnes -->
+                <div class="lesson" id="b4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Index multi-colonnes (optimisation avancée)</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE INDEX idx_nom_prenom
+ON clients(nom, prenom);
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Règle d’or :</strong><br />
+                        → MySQL n’utilise l’index que de gauche à droite.
+                    </p>
+                    <p>Cet index marche pour :</p>
+                    <ul>
+                        <li>✔ <code>nom</code></li>
+                        <li>✔ <code>nom + prenom</code></li>
+                        <li>❌ <code>prenom</code> seul</li>
+                    </ul>
+                </div>
+
+                <!-- 5. Optimisation structurelle -->
+                <div class="lesson" id="b5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Optimisation structurelle (modèle de données)</span>
+                    </div>
+                    <ul>
+                        <li>✔ Normaliser jusqu’à 3NF</li>
+                        <li>✔ Éviter les champs inutiles</li>
+                        <li>✔ Utiliser les bons types :
+                            <ul>
+                                <li><code>INT</code> vs <code>BIGINT</code></li>
+                                <li><code>VARCHAR(100)</code> plutôt que <code>VARCHAR(255)</code></li>
+                                <li><code>DATE</code> plutôt que <code>VARCHAR</code> pour une date</li>
+                            </ul>
+                        </li>
+                        <li>✔ Séparer les données historiques dans des tables d’archives</li>
+                    </ul>
+                </div>
+
+                <!-- 6. Optimisation serveur -->
+                <div class="lesson" id="b6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Optimisation du serveur MySQL</span>
+                    </div>
+                    <p><strong>Extrait OFPPT :</strong></p>
+                    <ul>
+                        <li>✔ Utiliser SSD plutôt que HDD</li>
+                        <li>✔ Ajuster la RAM (buffer pool InnoDB)</li>
+                        <li>✔ Utiliser InnoDB au lieu de MyISAM</li>
+                        <li>✔ Installer un outil d’analyse :
+                            <ul>
+                                <li>MySQLTuner</li>
+                                <li>Tuning-primer</li>
+                            </ul>
+                        </li>
+                        <li>✔ Garder MySQL à jour</li>
+                    </ul>
+                </div>
+
+                <!-- 7. Améliorer performances via cache -->
+                <div class="lesson" id="b7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Améliorer les performances via le cache</span>
+                    </div>
+                    <p>MySQL met en cache :</p>
+                    <ul>
+                        <li>les résultats de requêtes</li>
+                        <li>les plans d’exécution</li>
+                        <li>les index en mémoire</li>
+                    </ul>
+                    <p class="mt-small">Tu dois :</p>
+                    <ul>
+                        <li>✔ limiter la taille des colonnes</li>
+                        <li>✔ éviter <code>SELECT *</code></li>
+                        <li>✔ créer des index pertinents</li>
+                    </ul>
+                </div>
+
+                <!-- 8. EXPLAIN -->
+                <div class="lesson" id="b8">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>8. EXPLAIN — l’outil d’analyse le plus important</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>EXPLAIN
+SELECT *
+FROM produits
+WHERE prix &gt; 100;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">À analyser :</p>
+                    <ul>
+                        <li><strong>type</strong> (<code>ALL</code> = mauvais, <code>ref/index</code> = bon)</li>
+                        <li><strong>key</strong> (index utilisé)</li>
+                        <li><strong>rows</strong> (nombre de lignes parcourues)</li>
+                        <li><strong>Extra</strong> (<code>Using where</code>, <code>Using index</code>, etc.)</li>
+                    </ul>
+                </div>
+
+                <!-- 9. Exemple expert optimisation -->
+                <div class="lesson" id="b9">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>9. Exemple expert d’optimisation d’une requête</span>
+                    </div>
+                    <p><strong>Requête de départ :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT *
+FROM produits
+WHERE categorie = 'PC'
+  AND prix &gt; 1000
+ORDER BY prix DESC;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Optimisation :</strong></p>
+                    <ul>
+                        <li>Index multi-colonne :</li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE INDEX idx_cat_prix
+ON produits(categorie, prix);
+</code></pre>
+                    </div>
+
+                    <ul>
+                        <li>Ne sélectionner que les colonnes nécessaires :</li>
+                    </ul>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT id, nom, prix
+FROM produits
+WHERE categorie = 'PC'
+  AND prix &gt; 1000
+ORDER BY prix DESC;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">
+                        Filtrer avant de trier : MySQL trie seulement les lignes filtrées → beaucoup plus rapide.
+                    </p>
+                </div>
+
+                <!-- 10. Optimisation JOIN -->
+                <div class="lesson" id="b10">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>10. Optimisation des requêtes JOIN</span>
+                    </div>
+                    <p>Toujours indexer :</p>
+                    <ul>
+                        <li>la clé étrangère</li>
+                        <li>la colonne de jointure</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Exemple :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT p.nom, c.nom_cat
+FROM produits p
+INNER JOIN categorie c
+    ON p.id_cat = c.id;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Index recommandés :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE INDEX idx_p_idcat ON produits(id_cat);
+CREATE INDEX idx_c_id    ON categorie(id);
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- Exercices -->
+                <div class="lesson" id="b-exos">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>🟧 EXERCICES (débutant + expert)</span>
+                    </div>
+
+                    <p><strong>Débutant</strong></p>
+                    <ul>
+                        <li>Optimiser une requête <code>SELECT *</code> qui utilise un <code>LIKE "%..."</code>.</li>
+                        <li>Ajouter un index pertinent sur une table <code>clients</code>.</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Avancé</strong></p>
+                    <ul>
+                        <li>Créer un index multi-colonne pour optimiser une recherche par <code>nom/prenom</code>.</li>
+                        <li>Réécrire une requête lente en utilisant <code>EXISTS</code>.</li>
+                        <li>Utiliser <code>EXPLAIN</code> pour analyser une requête <code>JOIN</code> et proposer une optimisation.</li>
+                    </ul>
+                </div>
+
+                <!-- Récap expert -->
+                <div class="recap" id="b-recap">
+                    <div class="recap-title">
+                        🟧 RÉCAP EXPERT
+                    </div>
+                    <p>Tu maîtrises maintenant :</p>
+                    <ul>
+                        <li>✔ les différents types d’index (B-Tree, FULLTEXT, SPATIAL)</li>
+                        <li>✔ la différence clusterisé / non clusterisé</li>
+                        <li>✔ une vraie stratégie d’indexation (PK, FK, multi-colonnes, uniques)</li>
+                        <li>✔ l’impact de la structure des données et du serveur sur les performances</li>
+                        <li>✔ comment lire <code>EXPLAIN</code> pour optimiser une requête</li>
+                        <li>✔ l’optimisation de requêtes avec <code>JOIN</code>, filtres et ORDER BY</li>
+                    </ul>
+                    <p class="mt-small">
+                        Tu es prêt à concevoir des bases MySQL rapides, stables et prêtes pour la production.
+                    </p>
+                </div>
+            </div>
+
+            <div class="footer">
+                🎉 MODULE 6 TERMINÉ !
+            </div>
+        </div>
+
+        <!-- SIDEPANEL -->
+        <aside class="side-panel">
+            <div class="side-chip">
+                <span class="icon">📚</span> Plan du module
+            </div>
+            <p class="side-subtitle">
+                Navigation rapide dans les notions d’optimisation MySQL.
+            </p>
+
+            <h3 class="side-heading">Partie A — Débutant</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#a1"><span class="toc-badge">A1</span> Pourquoi optimiser ?</a></li>
+                <li><a class="toc-link" href="#a2"><span class="toc-badge">A2</span> 9 règles d’or</a></li>
+                <li><a class="toc-link" href="#a3"><span class="toc-badge">A3</span> Requêtes préparées</a></li>
+                <li><a class="toc-link" href="#a4"><span class="toc-badge">A4</span> Intro index</a></li>
+                <li><a class="toc-link" href="#a5"><span class="toc-badge">A5</span> Créer un index</a></li>
+                <li><a class="toc-link" href="#a6"><span class="toc-badge">A6</span> Quand indexer ?</a></li>
+                <li><a class="toc-link" href="#a7"><span class="toc-badge">A7</span> EXPLAIN & index</a></li>
+                <li><a class="toc-link" href="#a-recap"><span class="toc-badge">A★</span> Récap Débutant</a></li>
+            </ul>
+
+            <h3 class="side-heading">Partie B — Expert</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#b1"><span class="toc-badge">B1</span> Types d’index</a></li>
+                <li><a class="toc-link" href="#b2"><span class="toc-badge">B2</span> Clusterisé / non</a></li>
+                <li><a class="toc-link" href="#b3"><span class="toc-badge">B3</span> Stratégie d’indexation</a></li>
+                <li><a class="toc-link" href="#b4"><span class="toc-badge">B4</span> Index multi-colonnes</a></li>
+                <li><a class="toc-link" href="#b5"><span class="toc-badge">B5</span> Structure de données</a></li>
+                <li><a class="toc-link" href="#b6"><span class="toc-badge">B6</span> Serveur MySQL</a></li>
+                <li><a class="toc-link" href="#b7"><span class="toc-badge">B7</span> Cache & performances</a></li>
+                <li><a class="toc-link" href="#b8"><span class="toc-badge">B8</span> EXPLAIN avancé</a></li>
+                <li><a class="toc-link" href="#b9"><span class="toc-badge">B9</span> Optimiser une requête</a></li>
+                <li><a class="toc-link" href="#b10"><span class="toc-badge">B10</span> Optimiser les JOIN</a></li>
+                <li><a class="toc-link" href="#b-exos"><span class="toc-badge">B⧉</span> Exercices</a></li>
+                <li><a class="toc-link" href="#b-recap"><span class="toc-badge">B★</span> Récap Expert</a></li>
+            </ul>
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Surligner la section active dans la sidepanel
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sections = Array.from(document.querySelectorAll('.lesson[id], .recap[id]'));
+
+    function onScroll() {
+        const offset = 120;
+        const y = window.scrollY + offset;
+        let currentId = null;
+
+        for (const section of sections) {
+            const top = section.offsetTop;
+            const bottom = top + section.offsetHeight;
+            if (y >= top && y < bottom) {
+                currentId = section.id;
+                break;
+            }
+        }
+
+        tocLinks.forEach(link => {
+            const target = link.getAttribute('href').slice(1);
+            link.classList.toggle('active', target === currentId);
+        });
+    }
+
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+</script>
+</body>
+</html>
+

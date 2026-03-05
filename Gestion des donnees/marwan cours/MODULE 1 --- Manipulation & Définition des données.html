@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MODULE 1 — Manipulation & Définition des données</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #020617;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-soft: rgba(37, 99, 235, 0.08);
+            --accent: #f97316;
+            --text-main: #111827;
+            --text-soft: #6b7280;
+            --border-subtle: #e5e7eb;
+            --radius-lg: 18px;
+            --radius-sm: 8px;
+            --shadow-lg: 0 24px 60px rgba(15, 23, 42, 0.25);
+        }
+
+        /* Reset léger */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 24px;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                         Roboto, "Helvetica Neue", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top left, #1d4ed8 0, transparent 55%),
+                radial-gradient(circle at bottom right, #f97316 0, transparent 50%),
+                var(--bg-soft);
+            color: var(--text-main);
+        }
+
+        .app-shell {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(220px, 0.8fr);
+            gap: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .app-shell {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .main-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+            border-radius: 26px;
+            box-shadow: var(--shadow-lg);
+            padding: 26px 26px 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .main-card::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 10% 0%, rgba(37,99,235,0.09), transparent 55%),
+                radial-gradient(circle at 95% 85%, rgba(249,115,22,0.08), transparent 55%);
+            opacity: 0.9;
+            pointer-events: none;
+        }
+
+        .main-card-inner {
+            position: relative;
+            z-index: 1;
+        }
+
+        .side-panel {
+            position: sticky;
+            top: 20px; /* distance par rapport au haut de l'écran */
+            align-self: flex-start;
+            background-color: rgba(15, 23, 42, 0.75);
+            border-radius: 22px;
+            padding: 20px 18px 18px;
+            backdrop-filter: blur(18px);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            color: #e5e7eb;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.6);
+            max-height: calc(100vh - 40px);  /* pour qu’il tienne dans l’écran */
+            overflow-y: auto;                 /* scroll interne si la liste est longue */
+        }
+
+        .side-panel h2 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #e5e7eb;
+        }
+
+        .side-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: rgba(15,23,42,0.8);
+            border: 1px solid rgba(148,163,184,0.4);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: #cbd5f5;
+            margin-bottom: 10px;
+        }
+
+        .side-summary {
+            font-size: 13px;
+            color: #cbd5f5;
+            line-height: 1.6;
+            margin-bottom: 14px;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 12px 0 4px;
+            max-height: 420px;
+            overflow: auto;
+        }
+
+        .toc-list li {
+            margin-bottom: 6px;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 9px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 13px;
+            color: #e5e7eb;
+            transition: background 0.18s ease, transform 0.14s ease, box-shadow 0.14s ease;
+        }
+
+        .toc-link span.badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.6);
+            font-size: 11px;
+            background: rgba(15,23,42,0.9);
+        }
+
+        .toc-link:hover {
+            background: rgba(37, 99, 235, 0.16);
+            transform: translateY(-0.5px);
+            box-shadow: 0 6px 18px rgba(15,23,42,0.35);
+        }
+
+        .toc-link.active {
+            background: rgba(37, 99, 235, 0.28);
+        }
+
+        .header {
+            border-radius: 18px;
+            padding: 18px 20px;
+            background: rgba(15, 23, 42, 0.02);
+            border: 1px solid rgba(148,163,184,0.25);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px 18px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .header-title-group {
+            max-width: 76%;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 26px;
+            letter-spacing: -0.03em;
+            color: #0f172a;
+        }
+
+        .subtitle {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-soft);
+        }
+
+        .module-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .module-pill-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--primary);
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.22);
+        }
+
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 11px;
+        }
+
+        .tag {
+            padding: 3px 9px;
+            border-radius: 999px;
+            background: rgba(15,23,42,0.02);
+            border: 1px solid #e5e7eb;
+            color: #4b5563;
+        }
+
+        h2.section-title {
+            margin: 24px 0 12px;
+            font-size: 20px;
+            letter-spacing: -0.02em;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-tag {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(37,99,235,0.1);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        h3, h4 {
+            color: #111827;
+        }
+
+        h3 {
+            font-size: 17px;
+            margin: 18px 0 8px;
+        }
+
+        h4 {
+            font-size: 15px;
+            margin: 14px 0 6px;
+        }
+
+        p {
+            margin: 6px 0 10px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #374151;
+        }
+
+        ul, ol {
+            margin: 8px 0 12px;
+            padding-left: 22px;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        li {
+            margin: 4px 0 2px;
+        }
+
+        pre {
+            background: #020617;
+            color: #e5e7eb;
+            border-radius: 14px;
+            padding: 12px 14px;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            border: 1px solid rgba(148,163,184,0.45);
+            margin: 8px 0 12px;
+        }
+
+        code {
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            font-size: 13px;
+            background: rgba(15,23,42,0.04);
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 9px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th {
+            background: rgba(37, 99, 235, 0.08);
+            color: #111827;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background: #f9fafb;
+        }
+
+        .note,
+        .important,
+        .success,
+        .info {
+            border-radius: 12px;
+            padding: 10px 11px;
+            font-size: 13px;
+            margin: 10px 0;
+            border: 1px solid transparent;
+            display: flex;
+            gap: 10px;
+        }
+
+        .note::before,
+        .important::before,
+        .success::before,
+        .info::before {
+            font-size: 18px;
+            margin-top: 1px;
+        }
+
+        .note {
+            background: #fffbeb;
+            border-color: #fbbf24;
+        }
+
+        .note::before {
+            content: "💡";
+        }
+
+        .important {
+            background: #fef2f2;
+            border-color: #f97373;
+        }
+
+        .important::before {
+            content: "⚠️";
+        }
+
+        .success {
+            background: #ecfdf3;
+            border-color: #22c55e;
+        }
+
+        .success::before {
+            content: "✅";
+        }
+
+        .info {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        .info::before {
+            content: "ℹ️";
+        }
+
+        .note strong,
+        .important strong,
+        .success strong,
+        .info strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #111827;
+        }
+
+        .page-break {
+            margin: 24px 0 12px;
+            border-top: 1px dashed #e5e7eb;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .footer strong {
+            color: #111827;
+        }
+
+        .print-btn {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            background: #1d4ed8;
+            color: #f9fafb;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 10px 35px rgba(15,23,42,0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 1000;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .print-btn span {
+            font-size: 15px;
+        }
+
+        .print-btn:hover {
+            background: #1e40af;
+            transform: translateY(-1px);
+        }
+
+        .print-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 6px 18px rgba(15,23,42,0.4);
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 16px 10px 26px;
+            }
+            .main-card {
+                padding: 18px 16px 20px;
+            }
+            .header {
+                padding: 12px 12px;
+            }
+            .header-title-group {
+                max-width: 100%;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            .print-btn {
+                top: 12px;
+                right: 12px;
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+        }
+
+        /* Styles pour impression */
+        @media print {
+            body {
+                background: white !important;
+                padding: 0;
+            }
+            .app-shell {
+                display: block;
+                max-width: 210mm;
+            }
+            .side-panel {
+                display: none !important;
+            }
+            .main-card {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 15mm;
+                background: white;
+            }
+            .main-card::before {
+                display: none;
+            }
+            .print-btn {
+                display: none !important;
+            }
+            .page-break {
+                page-break-before: always;
+                border-top: none;
+                margin-top: 0;
+            }
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+            pre, table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">
+    <span>🖨️</span> Imprimer
+</button>
+
+<div class="app-shell">
+    <main class="main-card">
+        <div class="main-card-inner">
+
+            <header class="header">
+                <div class="header-title-group">
+                    <div class="module-pill">
+                        <span class="module-pill-dot"></span>
+                        MODULE 1 — PARTIE A
+                    </div>
+                    <h1>Manipulation &amp; Définition des données</h1>
+                    <p class="subtitle">Niveau débutant — tout expliqué pas à pas</p>
+                    <div class="tag-row">
+                        <span class="tag">SQL</span>
+                        <span class="tag">MySQL</span>
+                        <span class="tag">Débutant</span>
+                        <span class="tag">DDL / DML / DQL</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 1) Qu'est-ce que SQL ? -->
+            <section id="s1">
+                <h2 class="section-title">
+                    <span class="section-tag">1</span>
+                    Qu'est-ce que SQL ? — Détaillé
+                </h2>
+
+                <h4>Définition simple :</h4>
+                <p>SQL (Structured Query Language) est le langage standard utilisé pour communiquer avec une base de données relationnelle. Il sert à créer la structure, manipuler les données, interroger et contrôler les droits.</p>
+
+                <h4>Pourquoi on l'utilise :</h4>
+                <ul>
+                    <li>Pour stocker et retrouver des données rapidement.</li>
+                    <li>Pour automatiser des tâches sur les données (insert/update/delete).</li>
+                    <li>Pour structurer les données (tables, colonnes, contraintes).</li>
+                </ul>
+
+                <h4>Familles de commandes (avec rôle concret) :</h4>
+                <ul>
+                    <li><strong>DDL (Data Definition Language)</strong> — définir la structure : CREATE, ALTER, DROP.<br>
+                        Ex. : créer une table clients.</li>
+                    <li><strong>DML (Data Manipulation Language)</strong> — modifier le contenu : INSERT, UPDATE, DELETE.<br>
+                        Ex. : ajouter un client.</li>
+                    <li><strong>DQL (Data Query Language)</strong> — interroger : SELECT.<br>
+                        Ex. : lister tous les clients d'Agadir.</li>
+                    <li><strong>DCL (Data Control Language)</strong> — contrôler les accès : GRANT, REVOKE.<br>
+                        Ex. : donner le droit de lecture à un utilisateur.</li>
+                </ul>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 2) DB -->
+            <section id="s2">
+                <h2 class="section-title">
+                    <span class="section-tag">2</span>
+                    Créer et supprimer une base de données (DDL) — détaillé
+                </h2>
+
+                <h4>CREATE DATABASE nom;</h4>
+                <p><strong>Ce que ça fait :</strong> crée un espace logique qui contiendra des tables.</p>
+                <p>Exemple :</p>
+                <pre>CREATE DATABASE eshop_app_db;</pre>
+
+                <div class="note">
+                    <div>
+                        <strong>À savoir :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Après création, il faut <code>USE eshop_app_db;</code> pour travailler dedans.</li>
+                            <li>Une base peut contenir plusieurs tables, vues, procédures.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h4>DROP DATABASE nom;</h4>
+                <p><strong>Ce que ça fait :</strong> supprime la base ET toutes ses tables — irréversible si pas de sauvegarde.</p>
+                <p>Exemple :</p>
+                <pre>DROP DATABASE eshop_app_db;</pre>
+
+                <div class="important">
+                    <div>
+                        <strong>Piège :</strong> vérifier toujours avant d'exécuter (ne pas être connecté sur la base en production).
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3) tables -->
+            <section id="s3">
+                <h2 class="section-title">
+                    <span class="section-tag">3</span>
+                    Créer une table — détail complet (types, contraintes)
+                </h2>
+
+                <h4>Syntaxe de base :</h4>
+                <pre>CREATE TABLE clients (
+  id INT NOT NULL AUTO_INCREMENT,
+  nom VARCHAR(50) NOT NULL,
+  prenom VARCHAR(40),
+  date_naissance DATE,
+  adresse VARCHAR(50) DEFAULT 'Agadir',
+  PRIMARY KEY (id)
+) ENGINE=InnoDB;</pre>
+
+                <h4>Explications ligne par ligne :</h4>
+                <ul>
+                    <li><code>id INT</code> : colonne numérique.</li>
+                    <li><code>NOT NULL</code> : la colonne ne peut pas être vide.</li>
+                    <li><code>AUTO_INCREMENT</code> : MySQL génère automatiquement la prochaine valeur (utile pour l'ID).</li>
+                    <li><code>VARCHAR(50)</code> : chaîne de caractères variable jusqu'à 50 caractères.</li>
+                    <li><code>DEFAULT 'Agadir'</code> : valeur utilisée si on ne fournit rien à l'insert.</li>
+                    <li><code>PRIMARY KEY (id)</code> : identifiant unique ; indexé automatiquement.</li>
+                    <li><code>ENGINE=InnoDB</code> : moteur de stockage (InnoDB supporte transactions, contraintes, verrous).</li>
+                </ul>
+
+                <h4>Types de données importants :</h4>
+                <ul>
+                    <li><code>INT, BIGINT</code> — entiers.</li>
+                    <li><code>VARCHAR(n)</code> — texte court.</li>
+                    <li><code>TEXT</code> — texte long.</li>
+                    <li><code>DATE, DATETIME, TIMESTAMP</code> — dates/temps.</li>
+                    <li><code>DECIMAL(p,s)</code> — nombres décimaux (argent).</li>
+                    <li><code>BOOLEAN</code> — vrai/faux (souvent stocké comme TINYINT(1)).</li>
+                </ul>
+
+                <h4>Contraintes utiles :</h4>
+                <ul>
+                    <li><code>UNIQUE</code> : interdit les doublons sur une colonne.</li>
+                    <li><code>FOREIGN KEY</code> : référence à une autre table (garantit l'intégrité référentielle).</li>
+                    <li><code>CHECK</code> (selon version) : condition sur la valeur.</li>
+                </ul>
+
+                <div class="success">
+                    <div>
+                        <strong>Bonnes pratiques :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Définir des types justes (ni trop petits, ni trop gros).</li>
+                            <li>Toujours ajouter une clé primaire.</li>
+                            <li>Documenter la table.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 4) ALTER -->
+            <section id="s4">
+                <h2 class="section-title">
+                    <span class="section-tag">4</span>
+                    Modifier une table (ALTER TABLE) — détails
+                </h2>
+
+                <h4>Actions courantes :</h4>
+
+                <h4>Ajouter une colonne</h4>
+                <pre>ALTER TABLE clients ADD email VARCHAR(255);</pre>
+
+                <h4>Modifier un type</h4>
+                <pre>ALTER TABLE clients MODIFY COLUMN date_naissance DATE;</pre>
+
+                <h4>Changer le nom/structure</h4>
+                <pre>ALTER TABLE clients CHANGE COLUMN adresse ville VARCHAR(100);</pre>
+
+                <h4>Supprimer une colonne</h4>
+                <pre>ALTER TABLE clients DROP COLUMN email;</pre>
+
+                <h4>Renommer la table</h4>
+                <pre>ALTER TABLE commandes RENAME TO achats;</pre>
+
+                <div class="note">
+                    <div>
+                        <strong>À savoir :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Certaines modifications lockent la table (peuvent rendre la table indisponible pendant l'opération) — planifier en heures creuses.</li>
+                            <li>Faire une sauvegarde avant grosses modifications.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5) DROP TABLE -->
+            <section id="s5">
+                <h2 class="section-title">
+                    <span class="section-tag">5</span>
+                    Supprimer une table (DROP TABLE) — détail
+                </h2>
+
+                <pre>DROP TABLE clients;</pre>
+                <p><strong>Ce que ça fait :</strong> efface structure + données.</p>
+                <div class="info">
+                    <div>
+                        <strong>Remarque :</strong> MySQL peut supprimer aussi les triggers liés ; vérifier dépendances.
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 6) SELECT -->
+            <section id="s6">
+                <h2 class="section-title">
+                    <span class="section-tag">6</span>
+                    SELECT — interrogation complète (clauses et ordre d'exécution)
+                </h2>
+
+                <h4>Forme générale :</h4>
+                <pre>SELECT [DISTINCT] colonnes
+FROM table1
+[JOIN table2 ON condition]
+[WHERE condition]
+[GROUP BY champs]
+[HAVING condition_groupe]
+[ORDER BY champs]
+[LIMIT offset, count];</pre>
+
+                <h4>Explication des clauses (avec ordre logique d'exécution interne) :</h4>
+                <ol>
+                    <li><strong>FROM</strong> — on détermine les tables et les jointures.</li>
+                    <li><strong>WHERE</strong> — filtre ligne par ligne (avant l'agrégation).</li>
+                    <li><strong>GROUP BY</strong> — regroupe les lignes.</li>
+                    <li><strong>HAVING</strong> — filtre sur les groupes (après agrégation).</li>
+                    <li><strong>SELECT</strong> — calcule les colonnes demandées (agrégations, expressions).</li>
+                    <li><strong>ORDER BY</strong> — tri final.</li>
+                    <li><strong>LIMIT</strong> — nombre de lignes renvoyées.</li>
+                </ol>
+
+                <h4>Exemples :</h4>
+
+                <p><strong>Simple :</strong></p>
+                <pre>SELECT nom, prenom FROM clients WHERE adresse='Agadir' ORDER BY nom;</pre>
+
+                <p><strong>Avec agrégat :</strong></p>
+                <pre>SELECT filiere, AVG(moy1A) AS moyenne
+FROM Stagiaires
+GROUP BY filiere
+HAVING AVG(moy1A) &gt; 12;</pre>
+
+                <div class="important">
+                    <div>
+                        <strong>Pièges :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>WHERE ne peut pas filtrer sur un alias créé dans SELECT (utiliser sous-requête ou HAVING si agrégation).</li>
+                            <li>Utiliser EXPLAIN pour comprendre pourquoi une requête est lente.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 7) JOINTURES -->
+            <section id="s7">
+                <h2 class="section-title">
+                    <span class="section-tag">7</span>
+                    Les JOINTURES — expliqué en profondeur (ce que fait chacune)
+                </h2>
+
+                <p>Les jointures permettent de combiner des lignes venant de plusieurs tables selon une condition.</p>
+
+                <div class="info">
+                    <div>
+                        <strong>Imagine 2 tables :</strong><br>
+                        <code>clients(id, nom)</code><br>
+                        <code>commandes(id, client_id, montant)</code>
+                    </div>
+                </div>
+
+                <h3>a) INNER JOIN (jointure interne)</h3>
+                <p><strong>Ce que fait :</strong> retourne les lignes où la condition de jointure est vraie dans les deux tables.</p>
+                <pre>SELECT c.nom, o.montant
+FROM clients c
+INNER JOIN commandes o ON c.id = o.client_id;</pre>
+                <p><strong>Usage :</strong> quand on veut uniquement les clients qui ont des commandes.</p>
+
+                <h3>b) LEFT (OUTER) JOIN (jointure gauche)</h3>
+                <p><strong>Ce que fait :</strong> retourne toutes les lignes de la table de gauche (clients), et les données de droite (commandes) si elles existent ; sinon NULL.</p>
+                <pre>SELECT c.nom, o.montant
+FROM clients c
+LEFT JOIN commandes o ON c.id = o.client_id;</pre>
+                <p><strong>Usage :</strong> lister tous les clients et, si présent, leur commande. Utile pour trouver les clients sans commande (regarder WHERE o.client_id IS NULL).</p>
+
+                <h3>c) RIGHT (OUTER) JOIN (jointure droite)</h3>
+                <p><strong>Ce que fait :</strong> symétrique de LEFT JOIN — toutes les lignes de la table de droite et correspondances à gauche.</p>
+                <p>Peu utilisée si tu peux inverser l'ordre des tables (préférer LEFT JOIN pour clarté).</p>
+
+                <h3>d) FULL OUTER JOIN</h3>
+                <p><strong>Ce que ferait :</strong> union des LEFT + RIGHT (toutes les lignes des deux tables).</p>
+                <div class="important">
+                    <div>
+                        <strong>Important :</strong> MySQL classique ne supporte pas FULL OUTER JOIN directement — on simule avec UNION de LEFT et RIGHT.
+                    </div>
+                </div>
+
+                <h3>e) CROSS JOIN (produit cartésien)</h3>
+                <p><strong>Ce que fait :</strong> combine chaque ligne de la table A avec chaque ligne de la table B (multiplication).</p>
+                <pre>SELECT * FROM clients CROSS JOIN produits;</pre>
+                <p><strong>Usage :</strong> rarement ; attention au nombre de lignes (explosion combinatoire).</p>
+
+                <div class="success">
+                    <div>
+                        <strong>Notes pratiques sur les jointures :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Toujours préciser la condition ON ; sinon tu risques un produit cartésien par erreur.</li>
+                            <li>Lorsque tu fais des JOIN sur des colonnes indexées (ex : client_id), la requête est beaucoup plus rapide.</li>
+                            <li>Préférer des noms de table abrégés (c, o) pour lisibilité sur requêtes longues.</li>
+                            <li>Pour déboguer, commence par INNER JOIN puis adapte en LEFT JOIN si tu dois conserver l'ensemble d'une table.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 8) VUES -->
+            <section id="s8">
+                <h2 class="section-title">
+                    <span class="section-tag">8</span>
+                    Vues (Views) — expliqué
+                </h2>
+
+                <p><strong>Définition :</strong> une vue est une requête stockée accessible comme une table virtuelle.</p>
+
+                <h4>Exemple :</h4>
+                <pre>CREATE VIEW vw_clients_agadir AS
+SELECT id, nom, prenom FROM clients WHERE UPPER(adresse) = UPPER('agadir');</pre>
+
+                <h4>Points importants :</h4>
+                <ul>
+                    <li>Une vue simplifie l'accès à des requêtes fréquentes.</li>
+                    <li>Certaines vues sont modifiables (insertion possible) si elles sont simples (pas d'agrégat, pas de GROUP BY, pas de DISTINCT, pas de JOIN complexes).</li>
+                    <li>Les vues ne stockent pas les données (sauf vues matérialisées, non native MySQL) — elles recalculent la requête à l'appel.</li>
+                </ul>
+
+                <div class="success">
+                    <div>
+                        <strong>Bonnes pratiques :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Utilise les vues pour masquer la complexité (queries réutilisées).</li>
+                            <li>Ne pas abuser : les vues complexes peuvent cacher des problèmes de performance.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 9) Temp tables -->
+            <section id="s9">
+                <h2 class="section-title">
+                    <span class="section-tag">9</span>
+                    Tables temporaires — expliqué (usage et comportement)
+                </h2>
+
+                <p><strong>Définition :</strong> table visible seulement dans ta session (connexion) et automatiquement supprimée à la fin de la session.</p>
+
+                <h4>Exemple :</h4>
+                <pre>CREATE TEMPORARY TABLE temp_clients
+SELECT id, nom FROM clients WHERE adresse='Agadir';</pre>
+
+                <h4>Utilisations courantes :</h4>
+                <ul>
+                    <li>Stocker un résultat intermédiaire pour un traitement lourd.</li>
+                    <li>Améliorer lisibilité : découper une grosse requête en étapes.</li>
+                    <li>Éviter recalculs coûteux dans une même session.</li>
+                </ul>
+
+                <div class="note">
+                    <div>
+                        <strong>Remarques :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>La table temporaire masque une table normale du même nom dans la session.</li>
+                            <li>Elle est isolée : d'autres utilisateurs ne la voient pas.</li>
+                            <li>Pas pour stockage permanent (utiliser table normale si besoin permanent).</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 10) DML -->
+            <section id="s10">
+                <h2 class="section-title">
+                    <span class="section-tag">10</span>
+                    INSERT / UPDATE / DELETE — détails pratiques
+                </h2>
+
+                <h3>INSERT</h3>
+
+                <h4>Une ligne</h4>
+                <pre>INSERT INTO clients (nom, prenom, date_naissance)
+VALUES ('Zaki', 'Fatima', '1986-05-22');</pre>
+
+                <h4>Plusieurs lignes</h4>
+                <pre>INSERT INTO produits (nom, prix) VALUES ('Clavier', 150), ('Souris', 80);</pre>
+
+                <div class="note">
+                    <div>
+                        <strong>Remarques :</strong>
+                        <ul style="margin: 5px 0;">
+                            <li>Si une colonne a DEFAULT, tu peux l'omettre dans la liste de colonnes.</li>
+                            <li>Si AUTO_INCREMENT, tu peux ignorer la colonne id.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <h3>UPDATE</h3>
+                <pre>UPDATE clients
+SET adresse = 'Rabat', prenom = 'Fadia'
+WHERE id = 2;</pre>
+
+                <div class="important">
+                    <div>
+                        <strong>ATTENTION :</strong> si tu oublies le WHERE, tu mettras à jour toutes les lignes ! Toujours vérifier avec SELECT avant un UPDATE massif.
+                    </div>
+                </div>
+
+                <h3>DELETE</h3>
+                <pre>DELETE FROM clients WHERE id = 3;</pre>
+
+                <div class="important">
+                    <div>
+                        <strong>ATTENTION :</strong> <code>DELETE FROM clients;</code> supprime tout.</div>
+                </div>
+
+                <div class="success">
+                    <div>
+                        <strong>Bonnes pratiques :</strong>
+                        <ul style="margin: 5px 0%;">
+                            <li>Faire un SELECT avec la même WHERE avant DELETE ou UPDATE pour vérifier l'impact.</li>
+                            <li>Utiliser transaction (BEGIN / COMMIT / ROLLBACK) pour réversibilité (voir module transactions).</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 11) autres notions -->
+            <section id="s11">
+                <h2 class="section-title">
+                    <span class="section-tag">11</span>
+                    Autres notions utiles (débutant) — récapitulatif rapide
+                </h2>
+
+                <h4>LIMIT — pagination / limiter les résultats</h4>
+                <pre>SELECT * FROM produits LIMIT 10 OFFSET 20;</pre>
+
+                <h4>DISTINCT — valeurs uniques</h4>
+                <pre>SELECT DISTINCT option FROM Stagiaires;</pre>
+
+                <h4>ORDER BY — tri</h4>
+                <pre>SELECT nom, prenom FROM clients ORDER BY nom ASC, prenom DESC;</pre>
+
+                <h4>GROUP BY + agrégats (intro)</h4>
+                <pre>SELECT filiere, COUNT(*) AS nb
+FROM Stagiaires
+GROUP BY filiere;</pre>
+
+                <p><strong>COUNT, SUM, AVG, MIN, MAX</strong> — fonctions d'agrégat.</p>
+            </section>
+
+            <div class="page-break"></div>
+
+            <!-- 12) erreurs -->
+            <section id="s12">
+                <h2 class="section-title">
+                    <span class="section-tag">12</span>
+                    Erreurs fréquentes des débutants (et comment les éviter)
+                </h2>
+
+                <ul>
+                    <li><strong>Oublier le WHERE dans UPDATE/DELETE</strong> → toujours vérifier par un SELECT.</li>
+                    <li><strong>Utiliser SELECT * en production</strong> → choisir les colonnes nécessaires.</li>
+                    <li><strong>Mettre % au début d'un LIKE</strong> (LIKE '%abc') → empêche l'utilisation d'index.</li>
+                    <li><strong>Jointure sans ON</strong> → produit cartésien (résultat explosif).</li>
+                    <li><strong>Mauvais type de colonne</strong> (ex : stocker un prix en VARCHAR) → problèmes de calcul.</li>
+                    <li><strong>Pas d'index sur colonnes de jointure</strong> → requêtes très lentes.</li>
+                </ul>
+            </section>
+
+            <!-- 13) exercices -->
+            <section id="s13">
+                <h2 class="section-title">
+                    <span class="section-tag">13</span>
+                    Exercices pratiques détaillés (corrigés disponibles si tu veux)
+                </h2>
+
+                <h3>Exercice 1 — Créer la structure</h3>
+                <ul>
+                    <li>Crée une base <code>shop_db</code>.</li>
+                    <li>Crée une table <code>produits</code> :
+                        <ul>
+                            <li><code>id</code> INT auto-incrément</li>
+                            <li><code>nom</code> VARCHAR(100)</li>
+                            <li><code>prix</code> DECIMAL(10,2)</li>
+                            <li><code>categorie</code> VARCHAR(50)</li>
+                            <li><code>stock</code> INT</li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <h3>Exercice 2 — Manipulation</h3>
+                <ul>
+                    <li>Ajoute 5 produits (INSERT).</li>
+                    <li>Diminue le stock d'un produit de 1 (UPDATE).</li>
+                    <li>Supprime les produits dont le stock = 0 (DELETE).</li>
+                </ul>
+
+                <h3>Exercice 3 — Requête</h3>
+                <ul>
+                    <li>Lister les produits de la catégorie informatique triés par prix décroissant.</li>
+                    <li>Lister les catégories distinctes (DISTINCT).</li>
+                </ul>
+            </section>
+
+            <footer class="footer">
+                <p><strong>📘 Fin du MODULE 1 — PARTIE A</strong></p>
+                <p>Niveau débutant — tout expliqué</p>
+            </footer>
+        </div>
+    </main>
+
+    <aside class="side-panel">
+        <div class="side-chip">
+            <span>📚</span> Plan du module
+        </div>
+        <div class="side-summary">
+            Parcours guidé pour comprendre les bases de SQL, de la création de bases de données jusqu’aux jointures et exercices pratiques.
+        </div>
+        <h2>Sections</h2>
+        <ul class="toc-list">
+            <li><a class="toc-link" href="#s1"><span class="badge">1</span> Qu'est-ce que SQL ?</a></li>
+            <li><a class="toc-link" href="#s2"><span class="badge">2</span> Bases de données (CREATE/DROP)</a></li>
+            <li><a class="toc-link" href="#s3"><span class="badge">3</span> Créer une table</a></li>
+            <li><a class="toc-link" href="#s4"><span class="badge">4</span> Modifier une table</a></li>
+            <li><a class="toc-link" href="#s5"><span class="badge">5</span> Supprimer une table</a></li>
+            <li><a class="toc-link" href="#s6"><span class="badge">6</span> SELECT &amp; clauses</a></li>
+            <li><a class="toc-link" href="#s7"><span class="badge">7</span> Jointures</a></li>
+            <li><a class="toc-link" href="#s8"><span class="badge">8</span> Vues</a></li>
+            <li><a class="toc-link" href="#s9"><span class="badge">9</span> Tables temporaires</a></li>
+            <li><a class="toc-link" href="#s10"><span class="badge">10</span> INSERT / UPDATE / DELETE</a></li>
+            <li><a class="toc-link" href="#s11"><span class="badge">11</span> Notions utiles</a></li>
+            <li><a class="toc-link" href="#s12"><span class="badge">12</span> Erreurs fréquentes</a></li>
+            <li><a class="toc-link" href="#s13"><span class="badge">13</span> Exercices pratiques</a></li>
+        </ul>
+    </aside>
+</div>
+
+<script>
+    // petit script pour surligner la section active dans le sommaire (optionnel)
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sections = [...document.querySelectorAll('section[id]')];
+
+    function onScroll() {
+        const pos = window.scrollY + 120;
+        let current = null;
+
+        for (const sec of sections) {
+            const top = sec.offsetTop;
+            const height = sec.offsetHeight;
+            if (pos >= top && pos < top + height) {
+                current = sec.id;
+                break;
+            }
+        }
+
+        tocLinks.forEach(link => {
+            link.classList.toggle('active', link.getAttribute('href') === `#${current}`);
+        });
+    }
+
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+</script>
+</body>
+</html>
+

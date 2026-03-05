@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cours Complet - Gérer les Données (SQL & NoSQL)</title>
+    <style>
+        @media print {
+            body { margin: 0; padding: 15mm; }
+            .no-print { display: none; }
+            .page-break { page-break-before: always; }
+            h1, h2 { page-break-after: avoid; }
+            pre, table { page-break-inside: avoid; }
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            max-width: 210mm;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-style: italic;
+        }
+        
+        h2 {
+            color: #3498db;
+            font-size: 22px;
+            margin-top: 30px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        h3 {
+            color: #2c3e50;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+        
+        h4 {
+            color: #34495e;
+            font-size: 16px;
+            margin-top: 15px;
+        }
+        
+        .partie {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .partie h2 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: none;
+        }
+        
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+        
+        pre {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            margin: 15px 0;
+        }
+        
+        code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .note {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .print-btn:hover {
+            background: #2980b9;
+        }
+        
+        .plan {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn no-print" onclick="window.print()">🖨️ Imprimer</button>
+    
+    <div class="header">
+        <h1>📘 COURS COMPLET : Gérer les Données (SQL & NoSQL)</h1>
+        <p class="subtitle">Un cours clair, structuré, facile à comprendre et fidèle aux contenus OFPPT</p>
+    </div>
+    
+    <div class="plan">
+        <h2>🎯 PLAN GÉNÉRAL DU COURS</h2>
+        <p><strong>PARTIE I — Bases de données relationnelles & SQL/MySQL</strong></p>
+        <ol>
+            <li>Introduction aux bases de données relationnelles</li>
+            <li>Le langage SQL : DDL, DML, DQL</li>
+            <li>Tables, vues et tables temporaires</li>
+            <li>Programmation procédurale MySQL (Stored Procedures, Functions, Cursors…)</li>
+            <li>Structures de contrôle : IF, CASE, boucles</li>
+            <li>Transactions et verrouillage</li>
+            <li>Exceptions et gestion d'erreurs</li>
+            <li>Triggers (déclencheurs)</li>
+            <li>Optimisation de MySQL</li>
+            <li>Sécurisation d'un serveur MySQL</li>
+        </ol>
+        
+        <p><strong>PARTIE II — Bases de données NoSQL & MongoDB</strong></p>
+        <ol>
+            <li>Pourquoi le NoSQL ?</li>
+            <li>Types de bases NoSQL</li>
+            <li>Installation d'un serveur MongoDB</li>
+            <li>JSON & Modélisation documentaire</li>
+            <li>Embedding vs Linking</li>
+            <li>CRUD avec MongoDB</li>
+            <li>Opérateurs, filtres & tri</li>
+            <li>Agrégation</li>
+            <li>MongoDB + Python (PyMongo)</li>
+            <li>Import/export & sécurité</li>
+        </ol>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="partie">
+        <h2>🔵 PARTIE I — LES BASES RELATIONNELLES & MySQL</h2>
+    </div>
+
+    <h3>1️⃣ Introduction : C'est quoi un SGBD relationnel ?</h3>
+    <p>Un SGBD relationnel stocke les données sous forme de tables (lignes + colonnes).<br>
+    Ce type de base utilise un schéma fixe, ce qui garantit :</p>
+    <ul>
+        <li>cohérence des données</li>
+        <li>relations claires entre tables (PK/FK)</li>
+        <li>transactions fiables (ACID)</li>
+    </ul>
+    <div class="note">
+        📌 <strong>Exemples :</strong> MySQL, PostgreSQL, Oracle, SQL Server.
+    </div>
+
+    <h3>2️⃣ Le langage SQL (Structured Query Language)</h3>
+    <p><strong>⭐ Trois grandes catégories :</strong></p>
+
+    <h4>🔹 DDL : Data Definition Language</h4>
+    <p>Créer / modifier la structure de la base.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Action</th>
+                <th>Exemple</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Créer une base</td>
+                <td><code>CREATE DATABASE shop;</code></td>
+            </tr>
+            <tr>
+                <td>Créer une table</td>
+                <td><code>CREATE TABLE clients (...);</code></td>
+            </tr>
+            <tr>
+                <td>Modifier</td>
+                <td><code>ALTER TABLE clients ADD email VARCHAR(200);</code></td>
+            </tr>
+            <tr>
+                <td>Supprimer</td>
+                <td><code>DROP TABLE clients;</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h4>🔹 DML : Data Manipulation Language</h4>
+    <p>Insérer, modifier, supprimer des données.</p>
+    <pre>INSERT INTO clients(nom, prenom) VALUES("Ali","Said");
+
+UPDATE clients SET adresse="Agadir" WHERE id=1;
+
+DELETE FROM clients WHERE id=10;</pre>
+
+    <h4>🔹 DQL : Data Query Language</h4>
+    <p>Interroger les données : SELECT</p>
+    <p>Exemples :</p>
+    <pre>SELECT * FROM clients;
+
+SELECT nom, prenom FROM clients WHERE adresse="Agadir";</pre>
+
+    <h3>3️⃣ Les Vues & Tables Temporaire</h3>
+    
+    <h4>🔹 Vue = une requête enregistrée comme une "table virtuelle"</h4>
+    <pre>CREATE VIEW vw_clients_agadir AS
+SELECT * FROM clients WHERE adresse="Agadir";</pre>
+
+    <h4>🔹 Table temporaire</h4>
+    <p>Utilisée pour stocker un résultat temporaire :</p>
+    <pre>CREATE TEMPORARY TABLE temp_clients
+SELECT * FROM clients WHERE adresse="Agadir";</pre>
+
+    <div class="page-break"></div>
+
+    <h3>4️⃣ Programmation procédurale MySQL</h3>
+    <p>MySQL permet d'écrire du code "comme un langage de programmation" :</p>
+    <ul>
+        <li>variables</li>
+        <li>conditions</li>
+        <li>boucles</li>
+        <li>procédures stockées</li>
+        <li>fonctions</li>
+        <li>déclencheurs</li>
+    </ul>
+
+    <h3>5️⃣ Les Structures de contrôle</h3>
+    
+    <h4>🔹 IF – ELSE</h4>
+    <pre>IF age >= 18 THEN
+  SET categorie = "Adulte";
+ELSE
+  SET categorie = "Mineur";
+END IF;</pre>
+
+    <h4>🔹 CASE (équivalent switch)</h4>
+    <pre>CASE pays
+  WHEN 'Maroc' THEN SET taxe = 20;
+  WHEN 'USA' THEN SET taxe = 10;
+  ELSE SET taxe = 15;
+END CASE;</pre>
+
+    <h4>🔹 Boucles : LOOP, WHILE, REPEAT</h4>
+    <p>Exemple WHILE :</p>
+    <pre>WHILE i < 10 DO
+  SET i = i + 1;
+END WHILE;</pre>
+
+    <h3>6️⃣ Transactions (BEGIN, COMMIT, ROLLBACK)</h3>
+    <p>Permettent d'assurer l'intégrité d'une suite d'opérations :</p>
+    <div class="note">
+        📌 <strong>Exemple : transfert bancaire</strong>
+    </div>
+    <pre>START TRANSACTION;
+
+UPDATE compte SET solde = solde - 200 WHERE id=1;
+UPDATE compte SET solde = solde + 200 WHERE id=2;
+
+COMMIT;</pre>
+    <p>Si erreur → ROLLBACK.</p>
+
+    <h3>7️⃣ Les exceptions (Handlers)</h3>
+    <p>Exemple : empêcher l'insertion d'un nom NULL</p>
+    <pre>DECLARE EXIT HANDLER FOR 1048
+SET message = "Le nom est obligatoire";</pre>
+
+    <h3>8️⃣ Les curseurs (Cursors)</h3>
+    <p>Utiles pour parcourir ligne par ligne un résultat SELECT.</p>
+    <p>Exemple de boucle sur un curseur :</p>
+    <pre>DECLARE cur CURSOR FOR SELECT nom FROM clients;
+
+OPEN cur;
+FETCH cur INTO varNom;
+...
+CLOSE cur;</pre>
+
+    <div class="page-break"></div>
+
+    <h3>9️⃣ Les Triggers (déclencheurs)</h3>
+    <p>S'exécutent automatiquement lors d'un INSERT, UPDATE, DELETE.</p>
+    <p>Exemple : empêcher l'ajout d'un client de moins de 18 ans :</p>
+    <pre>CREATE TRIGGER avant_insert_client
+BEFORE INSERT ON clients
+FOR EACH ROW
+BEGIN
+  IF NEW.age < 18 THEN
+    SIGNAL SQLSTATE '50001'
+    SET MESSAGE_TEXT = 'Client mineur interdit';
+  END IF;
+END;</pre>
+
+    <h3>🔟 Optimisation de MySQL</h3>
+    <p><strong>Conseils :</strong></p>
+    <ul>
+        <li>éviter SELECT *</li>
+        <li>créer des INDEX sur les colonnes fréquemment utilisées</li>
+        <li>optimiser les requêtes avec EXPLAIN</li>
+        <li>éviter LIKE '%mot%'</li>
+        <li>préférer EXISTS à IN</li>
+    </ul>
+    <p>Exemple d'index :</p>
+    <pre>CREATE INDEX idx_clients_adresse ON clients(adresse);</pre>
+
+    <h3>1️⃣1️⃣ Sécurisation MySQL</h3>
+    
+    <h4>🔐 Création utilisateur :</h4>
+    <pre>CREATE USER 'saadi'@'localhost' IDENTIFIED BY '1234';</pre>
+
+    <h4>🔐 Donner des privilèges :</h4>
+    <pre>GRANT SELECT, INSERT ON shop.* TO 'saadi'@'localhost';</pre>
+
+    <h4>🔐 Sauvegarde :</h4>
+    <pre>mysqldump -u root -p shop > sauvegarde.sql</pre>
+
+    <div class="page-break"></div>
+
+    <div class="partie">
+        <h2>🟣 PARTIE II — BASES NoSQL & MongoDB</h2>
+        <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Contenu basé sur le fichier OFPPT Partie 2</p>
+    </div>
+
+    <h3>1️⃣ Pourquoi NoSQL ?</h3>
+    <p>Les BD relationnelles sont limitées pour le Big Data :</p>
+    <ul>
+        <li>énormes volumes</li>
+        <li>rapidité</li>
+        <li>données non structurées</li>
+    </ul>
+    <div class="note">
+        <strong>NoSQL = Not Only SQL</strong><br>
+        → plus flexible, distribué, adapté au web moderne.
+    </div>
+
+    <h3>2️⃣ Types de bases NoSQL</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Description</th>
+                <th>Exemples</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Clé-Valeur</td>
+                <td>Données simples, très rapides</td>
+                <td>Redis, DynamoDB</td>
+            </tr>
+            <tr>
+                <td>Document</td>
+                <td>JSON complet</td>
+                <td>MongoDB, CouchDB</td>
+            </tr>
+            <tr>
+                <td>Colonne</td>
+                <td>Type Big Data</td>
+                <td>Cassandra, HBase</td>
+            </tr>
+            <tr>
+                <td>Graphe</td>
+                <td>Relations complexes</td>
+                <td>Neo4j</td>
+            </tr>
+        </tbody>
+    </table>
+    <p><strong>MongoDB = type Document.</strong></p>
+
+    <h3>3️⃣ Installer & utiliser MongoDB</h3>
+    <p><strong>Sous Windows :</strong></p>
+    <ol>
+        <li>installer MongoDB Server</li>
+        <li>créer dossier data/db</li>
+        <li>lancer mongod (serveur)</li>
+        <li>utiliser Studio 3T / Mongosh</li>
+    </ol>
+
+    <h3>4️⃣ JSON & BSON</h3>
+    <p>Un document MongoDB = un objet JSON :</p>
+    <pre>{
+  "nom": "Amina",
+  "filiere": "Dev Digital",
+  "notes": [14, 15, 12]
+}</pre>
+    <p>MongoDB utilise BSON (JSON binaire) → plus rapide + types supplémentaires.</p>
+
+    <div class="page-break"></div>
+
+    <h3>5️⃣ Modélisation : Embedding vs Linking</h3>
+    
+    <h4>🔹 Embedding (imbrication)</h4>
+    <p>Mettre un document dans un autre.</p>
+    <pre>{
+  "nom": "Amina",
+  "filiere": { "id": "DD", "nom": "Dev Digital" }
+}</pre>
+    <p>👍 rapide en lecture<br>
+    👎 à éviter si les données grossissent</p>
+
+    <h4>🔹 Linking (référence)</h4>
+    <p>Comme les clés étrangères :</p>
+    <pre>{
+  "nom": "Amina",
+  "filiere_id": "DD"
+}</pre>
+    <p>👍 utile si relations complexes (plusieurs-à-plusieurs)</p>
+
+    <h3>6️⃣ CRUD avec MongoDB</h3>
+    
+    <h4>➤ INSERT</h4>
+    <pre>db.stagiaires.insertOne({
+  nom: "Amina",
+  filiere: "Dev Digital",
+  niveau: "2A"
+});</pre>
+
+    <h4>➤ FIND</h4>
+    <pre>db.stagiaires.find({ niveau: "2A" });</pre>
+
+    <h4>➤ UPDATE</h4>
+    <pre>db.stagiaires.updateOne(
+  { nom: "Amina" },
+  { $set: { niveau: "3A" } }
+);</pre>
+
+    <h4>➤ DELETE</h4>
+    <pre>db.stagiaires.deleteOne({ nom: "Amina" });</pre>
+
+    <h3>7️⃣ Opérateurs utiles</h3>
+    <p><strong>Comparaison :</strong></p>
+    <ul>
+        <li><code>$gt</code> &gt;</li>
+        <li><code>$lt</code> &lt;</li>
+        <li><code>$gte</code> ≥</li>
+        <li><code>$eq</code> =</li>
+        <li><code>$ne</code> ≠</li>
+        <li><code>$in</code> liste</li>
+    </ul>
+    <p>Ex :</p>
+    <pre>db.stagiaires.find({ moy1A: { $gte: 14 } });</pre>
+
+    <h3>8️⃣ Tri & Limite</h3>
+    <pre>db.stagiaires.find().sort({ nom: 1 }).limit(5);</pre>
+
+    <h3>9️⃣ Agrégation</h3>
+    <p>Très puissant pour statistiques :</p>
+    <pre>db.stagiaires.aggregate([
+  { $group: { _id: "$filiere", moy: { $avg: "$moy1A" } } }
+]);</pre>
+
+    <div class="page-break"></div>
+
+    <h3>🔟 MongoDB + Python (PyMongo)</h3>
+    
+    <h4>Connexion :</h4>
+    <pre>from pymongo import MongoClient
+client = MongoClient()
+db = client.Examples</pre>
+
+    <h4>Requête :</h4>
+    <pre>for s in db.Stagiaires.find({"option": "Mobile"}):
+    print(s)</pre>
+
+    <h3>1️⃣1️⃣ Import / Export</h3>
+    
+    <h4>Export JSON :</h4>
+    <pre>mongoexport -d Examples -c Stagiaires -o file.json</pre>
+
+    <h4>Import JSON :</h4>
+    <pre>mongoimport -d Examples -c Stagiaires file.json</pre>
+
+    <h3>1️⃣2️⃣ Sécurisation MongoDB</h3>
+    
+    <h4>Créer un user :</h4>
+    <pre>db.createUser({
+  user: "admin",
+  pwd: "pass",
+  roles: [{ role: "userAdmin", db: "Examples" }]
+});</pre>
+
+    <h4>S'authentifier :</h4>
+    <pre>db.auth("admin", "pass");</pre>
+
+    <div style="text-align: center; margin-top: 50px; padding: 20px; border-top: 2px solid #ddd;">
+        <p><strong>📘 Fin du cours</strong></p>
+        <p style="color: #7f8c8d;">OFPPT - Gérer les Données (SQL & NoSQL)</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Module 4 — Triggers (Déclencheurs) MySQL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- (Optionnel) Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #111827;
+            --bg-softer: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-2: #a855f7;
+            --accent-2-soft: rgba(168, 85, 247, 0.12);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+            --card: #020617;
+            --code-bg: #020617;
+            --tag-bg: #1e293b;
+            --success: #22c55e;
+            --danger: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #020617 50%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+        }
+
+        /* ====== LAYOUT AVEC SIDEPANEL ====== */
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.95fr);
+            gap: 1.8rem;
+            align-items: flex-start;
+            margin-top: 1.8rem;
+        }
+
+        .main-content {
+            min-width: 0;
+        }
+
+        .side-panel {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            padding: 1rem 1.1rem 1.2rem;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+        }
+
+        .side-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .side-chip span.icon {
+            font-size: 0.95rem;
+        }
+
+        .side-subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin: 0 0 0.6rem;
+        }
+
+        .side-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.15rem;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.28rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: #e5e7eb;
+            text-decoration: none;
+            transition: background 0.16s ease, transform 0.1s ease;
+        }
+
+        .toc-link:hover {
+            background: rgba(56, 189, 248, 0.14);
+            transform: translateY(-0.5px);
+        }
+
+        .toc-link.active {
+            background: rgba(56, 189, 248, 0.24);
+        }
+
+        .toc-badge {
+            min-width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            color: var(--muted);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .side-panel {
+                position: static;
+                max-height: none;
+                margin-top: 1rem;
+            }
+        }
+
+        /* ====== STYLES GÉNÉRAUX ====== */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .badge span.icon {
+            font-size: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 3vw, 2.4rem);
+            margin: 0.8rem 0 0.5rem;
+            background: linear-gradient(to right, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .tag-row {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--tag-bg);
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #111827, #020617);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        h2.section-title {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2.section-title span.label {
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        h2.section-title span.label.expert {
+            background: var(--accent-2-soft);
+            color: var(--accent-2);
+        }
+
+        .section {
+            margin-top: 0.75rem;
+        }
+
+        .lesson {
+            margin-top: 1.3rem;
+            padding: 1.1rem 1.1rem 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .lesson-header {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .lesson-header span.bullet {
+            font-size: 0.9rem;
+        }
+
+        .lesson p {
+            margin: 0.3rem 0;
+            font-size: 0.92rem;
+        }
+
+        ul, ol {
+            margin: 0.3rem 0 0.3rem 1.4rem;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin: 0.1rem 0;
+        }
+
+        .code-block {
+            margin-top: 0.6rem;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at top, #020617, #020617 45%, #020617);
+            padding: 0.7rem 0.8rem;
+            position: relative;
+            font-size: 0.83rem;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.7rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        pre {
+            margin: 0.4rem 0 0 0;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            white-space: pre;
+        }
+
+        code {
+            font-family: inherit;
+        }
+
+        .table-wrap {
+            margin-top: 0.6rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.45rem 0.6rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .recap {
+            margin-top: 1.5rem;
+            padding: 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .recap-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--success);
+        }
+
+        .recap ul {
+            margin: 0.3rem 0 0.2rem 1.2rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .mt-small {
+            margin-top: 0.4rem;
+        }
+
+        /* Impression : on masque la sidepanel */
+        @media print {
+            body {
+                background: #ffffff !important;
+            }
+            .page {
+                padding: 0;
+            }
+            .layout {
+                display: block;
+            }
+            .side-panel {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <div class="badge">
+        <span class="icon">🎯</span> MODULE 4 — LES TRIGGERS (DÉCLENCHEURS)
+    </div>
+    <h1>TRIGGERS (DÉCLENCHEURS) MySQL</h1>
+    <p class="subtitle">
+        Exécuter du code automatiquement lors des INSERT, UPDATE et DELETE.
+    </p>
+    <div class="tag-row">
+        <span class="tag">MySQL</span>
+        <span class="tag">Triggers</span>
+        <span class="tag">Déclencheurs</span>
+        <span class="tag">OFPPT</span>
+    </div>
+
+    <div class="layout">
+        <!-- Contenu principal -->
+        <div class="main-content">
+
+            <!-- Intro cards -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟦 PARTIE A — NIVEAU DÉBUTANT
+                        </div>
+                        <div class="level-pill">
+                            ⭐ Niveau débutant
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Comprendre ce qu’est un trigger, quand il s’exécute, OLD/NEW, et créer des déclencheurs simples.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟪 PARTIE B — NIVEAU EXPERT
+                        </div>
+                        <div class="level-pill">
+                            🚀 Niveau expert
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Usages professionnels, contraintes avancées, audit, contrôle métier et modèle de trigger robuste.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PARTIE A — Débutant -->
+            <h2 class="section-title" id="partie-a">
+                <span class="label">Débutant</span>
+                <span>🟦 PARTIE A — NIVEAU DÉBUTANT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Qu'est-ce qu'un trigger ? -->
+                <div class="lesson" id="a1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Qu’est-ce qu’un trigger ?</span>
+                    </div>
+                    <p>
+                        Un trigger est une procédure stockée qui s’exécute automatiquement quand un événement se produit sur une table.
+                    </p>
+
+                    <p>Les déclencheurs réagissent à :</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Événement</th>
+                                <th>Avant</th>
+                                <th>Après</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>INSERT</td>
+                                <td>BEFORE INSERT</td>
+                                <td>AFTER INSERT</td>
+                            </tr>
+                            <tr>
+                                <td>UPDATE</td>
+                                <td>BEFORE UPDATE</td>
+                                <td>AFTER UPDATE</td>
+                            </tr>
+                            <tr>
+                                <td>DELETE</td>
+                                <td>BEFORE DELETE</td>
+                                <td>AFTER DELETE</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Syntaxe simple -->
+                <div class="lesson" id="a2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Syntaxe simple d’un trigger</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE TRIGGER nom_trigger
+BEFORE | AFTER  INSERT | UPDATE | DELETE
+ON nom_table
+FOR EACH ROW
+BEGIN
+    -- Code à exécuter automatiquement
+END;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 3. OLD / NEW -->
+                <div class="lesson" id="a3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Les pseudo-variables OLD et NEW</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Trigger</th>
+                                <th>NEW</th>
+                                <th>OLD</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>BEFORE INSERT</td>
+                                <td>✔ valeur insérée</td>
+                                <td>✘</td>
+                            </tr>
+                            <tr>
+                                <td>AFTER INSERT</td>
+                                <td>✔</td>
+                                <td>✘</td>
+                            </tr>
+                            <tr>
+                                <td>BEFORE UPDATE</td>
+                                <td>✔ nouvelle valeur</td>
+                                <td>✔ ancienne valeur</td>
+                            </tr>
+                            <tr>
+                                <td>AFTER UPDATE</td>
+                                <td>✔</td>
+                                <td>✔</td>
+                            </tr>
+                            <tr>
+                                <td>BEFORE DELETE</td>
+                                <td>✘</td>
+                                <td>✔ valeur supprimée</td>
+                            </tr>
+                            <tr>
+                                <td>AFTER DELETE</td>
+                                <td>✘</td>
+                                <td>✔</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="mt-small">
+                        <code>NEW.colonne</code> → nouvelle valeur<br />
+                        <code>OLD.colonne</code> → valeur avant modification
+                    </p>
+                </div>
+
+                <!-- 4. Exemple : empêcher les mineurs -->
+                <div class="lesson" id="a4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Exemple simple : empêcher les mineurs d’être ajoutés</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER //
+
+CREATE TRIGGER tr_age_min
+BEFORE INSERT ON clients
+FOR EACH ROW
+BEGIN
+    IF NEW.date_naissance &gt; DATE_SUB(CURDATE(), INTERVAL 18 YEAR) THEN
+        SIGNAL SQLSTATE '50001'
+        SET MESSAGE_TEXT = 'Le client doit avoir au moins 18 ans';
+    END IF;
+END //
+
+DELIMITER ;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">
+                        ➡ Le trigger se déclenche automatiquement avant chaque <code>INSERT</code>.
+                    </p>
+                </div>
+
+                <!-- 5. Exemple : historiser suppression -->
+                <div class="lesson" id="a5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Exemple simple : historiser une suppression</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE TRIGGER tr_archive_salaire
+BEFORE DELETE ON salaries
+FOR EACH ROW
+INSERT INTO SalaryArchives(employeeNumber, validFrom, amount)
+VALUES (OLD.employeeNumber, OLD.validFrom, OLD.amount);
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. Lister / supprimer triggers -->
+                <div class="lesson" id="a6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Lister et supprimer des triggers</span>
+                    </div>
+
+                    <p><strong>Lister :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SHOW TRIGGERS;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Supprimer :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DROP TRIGGER nom_trigger;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- Récap débutant -->
+                <div class="recap" id="a-recap">
+                    <div class="recap-title">
+                        🟦 Résumé Débutant
+                    </div>
+                    <p>Tu sais maintenant :</p>
+                    <ul>
+                        <li>✔ ce qu’est un trigger</li>
+                        <li>✔ quand il s’exécute (BEFORE / AFTER + INSERT / UPDATE / DELETE)</li>
+                        <li>✔ utiliser <code>OLD</code> et <code>NEW</code></li>
+                        <li>✔ créer un trigger BEFORE ou AFTER</li>
+                        <li>✔ bloquer une action avec <code>SIGNAL</code></li>
+                        <li>✔ archiver des données supprimées</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- PARTIE B — Expert -->
+            <h2 class="section-title" id="partie-b">
+                <span class="label expert">Expert</span>
+                <span>🟪 PARTIE B — NIVEAU EXPERT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Raisons pro -->
+                <div class="lesson" id="b1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Les vraies raisons d’utiliser un trigger</span>
+                    </div>
+                    <ul>
+                        <li>✔ Contrôles métier (âge, stock minimum, règles d’entreprise)</li>
+                        <li>✔ Historisation (audit log)</li>
+                        <li>✔ Mise à jour automatique d’autres tables</li>
+                        <li>✔ Calculs automatiques</li>
+                        <li>✔ Protection contre des données invalides</li>
+                    </ul>
+                    <p class="mt-small">
+                        Les triggers permettent une cohérence des données garantie, même si plusieurs applications se connectent à MySQL.
+                    </p>
+                </div>
+
+                <!-- 2. Restrictions -->
+                <div class="lesson" id="b2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Restrictions importantes</span>
+                    </div>
+                    <ul>
+                        <li>❌ Un seul trigger par type (ex : 1 seul <code>BEFORE INSERT</code> par table)</li>
+                        <li>❌ Impossible de retourner une valeur</li>
+                        <li>❌ Impossible d’utiliser <code>CALL</code> dans un trigger</li>
+                        <li>❌ Impossible de créer des tables temporaires dans un trigger</li>
+                        <li>⚠ Trigger dépend du moteur (InnoDB, MyISAM…)</li>
+                    </ul>
+                    <p class="mt-small">
+                        ➡ Pour combiner plusieurs actions, il faut tout mettre dans un seul trigger.
+                    </p>
+                </div>
+
+                <!-- 3. AFTER INSERT avancés -->
+                <div class="lesson" id="b3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Les triggers AFTER INSERT avancés</span>
+                    </div>
+                    <p><strong>Exemple :</strong> mettre à jour une moyenne d’âge après insertion d’un client</p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE TRIGGER tr_update_moyenne
+AFTER INSERT ON clients
+FOR EACH ROW
+UPDATE moyenne_age
+SET moyenne = (
+    SELECT AVG(TIMESTAMPDIFF(YEAR, date_naissance, CURDATE()))
+    FROM clients
+);
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. UPDATE : colonnes modifiées -->
+                <div class="lesson" id="b4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Triggers UPDATE : détecter les colonnes modifiées</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF OLD.quantite &lt;&gt; NEW.quantite THEN
+    INSERT INTO SalesChanges (salesId, beforeQty, afterQty)
+    VALUES (OLD.id, OLD.quantite, NEW.quantite);
+END IF;
+</code></pre>
+                    </div>
+                    <p class="mt-small">
+                        ➡ MySQL ne fait rien automatiquement → c'est au développeur de tester les changements.
+                    </p>
+                </div>
+
+                <!-- 5. BEFORE UPDATE : bloquer -->
+                <div class="lesson" id="b5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Triggers BEFORE UPDATE : bloquer une modification interdite</span>
+                    </div>
+                    <p><strong>Exemple :</strong> empêcher qu’un client ne devienne mineur après modification :</p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF NEW.date_naissance &gt; DATE_SUB(CURDATE(), INTERVAL 18 YEAR) THEN
+    SIGNAL SQLSTATE '50002'
+    SET MESSAGE_TEXT = 'Âge minimum requis';
+END IF;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. Détection fraude -->
+                <div class="lesson" id="b6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Détection de fraude ou modifications sensibles</span>
+                    </div>
+                    <p>Un trigger peut par exemple :</p>
+                    <ul>
+                        <li>enregistrer l’ancien propriétaire d’un compte</li>
+                        <li>loguer toutes les modifications</li>
+                        <li>sauvegarder l’adresse avant modification</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Exemple :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE TRIGGER after_sales_update
+AFTER UPDATE ON sales
+FOR EACH ROW
+BEGIN
+    IF OLD.amount &lt;&gt; NEW.amount THEN
+        INSERT INTO SalesAudit(saleId, oldAmount, newAmount, date_modif)
+        VALUES (OLD.id, OLD.amount, NEW.amount, NOW());
+    END IF;
+END;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Combiner triggers & règles métier -->
+                <div class="lesson" id="b7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Combiner triggers &amp; contraintes métier</span>
+                    </div>
+                    <p><strong>Exemple :</strong> bloquer une commande si le stock est insuffisant.</p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF NEW.qte &gt; (SELECT stock
+               FROM produits
+               WHERE id = NEW.produit_id) THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Stock insuffisant';
+END IF;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 8. BEFORE / AFTER DELETE -->
+                <div class="lesson" id="b8">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>8. Trigger BEFORE DELETE + AFTER DELETE</span>
+                    </div>
+                    <p>Utile pour :</p>
+                    <ul>
+                        <li>archivage</li>
+                        <li>recalcul d’un budget</li>
+                        <li>mise à jour des totaux</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Exemple :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE TRIGGER after_salary_delete
+AFTER DELETE ON salaries
+FOR EACH ROW
+UPDATE SalaryBudgets
+SET total = total - OLD.salary;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 9. Séquence pro -->
+                <div class="lesson" id="b9">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>9. Séquence professionnelle d’utilisation des triggers</span>
+                    </div>
+                    <p>Voici comment un développeur organise ses triggers :</p>
+                    <ul>
+                        <li><strong>BEFORE INSERT</strong> → contrôle / validation</li>
+                        <li><strong>AFTER INSERT</strong> → calculs externes</li>
+                        <li><strong>BEFORE UPDATE</strong> → interdictions / comparaisons</li>
+                        <li><strong>AFTER UPDATE</strong> → historisation</li>
+                        <li><strong>BEFORE DELETE</strong> → archivage</li>
+                        <li><strong>AFTER DELETE</strong> → mises à jour globales</li>
+                    </ul>
+                </div>
+
+                <!-- 10. Modèle complet -->
+                <div class="lesson" id="b10">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>10. Modèle complet de trigger professionnel</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER //
+
+CREATE TRIGGER tr_clients_update
+BEFORE UPDATE ON clients
+FOR EACH ROW
+BEGIN
+    -- 1. Validation
+    IF NEW.date_naissance &gt; DATE_SUB(CURDATE(), INTERVAL 18 YEAR) THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Âge minimum 18 ans';
+    END IF;
+
+    -- 2. Journalisation
+    IF OLD.adresse &lt;&gt; NEW.adresse THEN
+        INSERT INTO AuditAdresse(clientId, oldAddr, newAddr, date_modif)
+        VALUES (OLD.id, OLD.adresse, NEW.adresse, NOW());
+    END IF;
+END//
+
+DELIMITER ;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- Exercices -->
+                <div class="lesson" id="b-exos">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>🟧 EXERCICES (débutant + expert)</span>
+                    </div>
+
+                    <p><strong>Débutant</strong></p>
+                    <ul>
+                        <li>Créer un trigger <strong>BEFORE INSERT</strong> qui interdit une date de naissance supérieure à aujourd’hui.</li>
+                        <li>Créer un <strong>AFTER DELETE</strong> qui archive un produit supprimé.</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Avancé</strong></p>
+                    <ul>
+                        <li>Créer un <strong>BEFORE UPDATE</strong> qui garde un historique de changement d’email.</li>
+                        <li>Créer un <strong>AFTER UPDATE</strong> qui recalcule automatiquement le stock total dans une table <code>stock_global</code>.</li>
+                        <li>Créer un <strong>BEFORE INSERT</strong> qui vérifie qu’un email n’existe pas déjà dans la table (avec <code>SIGNAL</code>).</li>
+                    </ul>
+                </div>
+
+                <!-- Récap expert -->
+                <div class="recap" id="b-recap">
+                    <div class="recap-title">
+                        🟧 RÉCAP EXPERT
+                    </div>
+                    <p>Tu maîtrises maintenant :</p>
+                    <ul>
+                        <li>✔ les restrictions et limites des triggers MySQL</li>
+                        <li>✔ l’usage de triggers pour audit, contrôle métier et calculs automatiques</li>
+                        <li>✔ comment détecter les changements avec <code>OLD</code> / <code>NEW</code></li>
+                        <li>✔ organisation pro : BEFORE/AFTER + INSERT/UPDATE/DELETE</li>
+                        <li>✔ comment écrire un trigger complet, lisible et maintenable</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer">
+                🎉 MODULE 4 TERMINÉ !
+            </div>
+        </div>
+
+        <!-- SIDEPANEL -->
+        <aside class="side-panel">
+            <div class="side-chip">
+                <span class="icon">📚</span> Plan du module
+            </div>
+            <p class="side-subtitle">
+                Navigation rapide dans les notions sur les triggers MySQL.
+            </p>
+
+            <h3 class="side-heading">Partie A — Débutant</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#a1"><span class="toc-badge">A1</span> Qu’est-ce qu’un trigger ?</a></li>
+                <li><a class="toc-link" href="#a2"><span class="toc-badge">A2</span> Syntaxe d’un trigger</a></li>
+                <li><a class="toc-link" href="#a3"><span class="toc-badge">A3</span> OLD / NEW</a></li>
+                <li><a class="toc-link" href="#a4"><span class="toc-badge">A4</span> Trigger anti-mineurs</a></li>
+                <li><a class="toc-link" href="#a5"><span class="toc-badge">A5</span> Historiser une suppression</a></li>
+                <li><a class="toc-link" href="#a6"><span class="toc-badge">A6</span> Lister &amp; supprimer</a></li>
+                <li><a class="toc-link" href="#a-recap"><span class="toc-badge">A★</span> Récap Débutant</a></li>
+            </ul>
+
+            <h3 class="side-heading">Partie B — Expert</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#b1"><span class="toc-badge">B1</span> Raisons professionnelles</a></li>
+                <li><a class="toc-link" href="#b2"><span class="toc-badge">B2</span> Restrictions</a></li>
+                <li><a class="toc-link" href="#b3"><span class="toc-badge">B3</span> AFTER INSERT avancés</a></li>
+                <li><a class="toc-link" href="#b4"><span class="toc-badge">B4</span> UPDATE &amp; colonnes modifiées</a></li>
+                <li><a class="toc-link" href="#b5"><span class="toc-badge">B5</span> BEFORE UPDATE (blocage)</a></li>
+                <li><a class="toc-link" href="#b6"><span class="toc-badge">B6</span> Détection de fraude</a></li>
+                <li><a class="toc-link" href="#b7"><span class="toc-badge">B7</span> Règles métier &amp; SIGNAL</a></li>
+                <li><a class="toc-link" href="#b8"><span class="toc-badge">B8</span> BEFORE / AFTER DELETE</a></li>
+                <li><a class="toc-link" href="#b9"><span class="toc-badge">B9</span> Séquence pro</a></li>
+                <li><a class="toc-link" href="#b10"><span class="toc-badge">B10</span> Modèle complet</a></li>
+                <li><a class="toc-link" href="#b-exos"><span class="toc-badge">B⧉</span> Exercices</a></li>
+                <li><a class="toc-link" href="#b-recap"><span class="toc-badge">B★</span> Récap Expert</a></li>
+            </ul>
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Surligner la section active dans la sidepanel
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sections = Array.from(document.querySelectorAll('.lesson[id], .recap[id]'));
+
+    function onScroll() {
+        const offset = 120;
+        const y = window.scrollY + offset;
+        let currentId = null;
+
+        for (const section of sections) {
+            const top = section.offsetTop;
+            const bottom = top + section.offsetHeight;
+            if (y >= top && y < bottom) {
+                currentId = section.id;
+                break;
+            }
+        }
+
+        tocLinks.forEach(link => {
+            const target = link.getAttribute('href').slice(1);
+            link.classList.toggle('active', target === currentId);
+        });
+    }
+
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+</script>
+</body>
+</html>

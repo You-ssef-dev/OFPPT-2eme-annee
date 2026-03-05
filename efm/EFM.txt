@@ -1,0 +1,102 @@
+                      EFM REACT
+
+
+react-composants  fonctionnels:créer des composants simples et retourner  du jsx
+
+
+react-props:passer et utiliser des données dans
+
+
+routing
+
+
+page d'erreur/nopage:gerer les routes inexistantes 
+
+
+api/fetch/axios: recuperer des données et les afficher avec map
+
+
+useState:stocker les données et gérer  les changements d'etat
+
+
+useEffect:effectuer des appels API au chargement
+
+
+formulaire react:champs controles,value,onChange
+
+
+select dynamique:remplir un select via une API 
+
+
+soumission de formulaire : onSubmit et gestion des validation
+
+
+lister des éléments: afficher une liste d'éléments (attribut1(ex:img),attribut2,attribut3)
+
+
+
+redux-store:créer le store et le rendre disponibla  avec provides
+
+
+reducer:gérer l'état initial et les actions (switch-action.type))
+
+
+actions redux: déclarer types  (ADDED,REMOVED) et créer le actions
+
+
+useDispatch:envoyer une action au store
+
+
+useSelector:lire l'état du store
+
+boutons de controle:ajouter/supprimer ....
+
+
+
+
+
+
+
+                                   EFM APPROCHE AGILE
+
+
+manifeste agile  ( les 4 valeur et 12 pricipes )
+
+méthodologies agile(xp,scrum..)
+
+product backlog et organisation des taches
+
+user stories et epics
+
+roles scrum:product owner ,scrum master,aquipe
+Chef de projet :
+evenements scrum:planification,revus aprint
+
+durée et organisation des stand-up quotidiens
+
+incrément logiciel et livraison pa sprint
+
+gestion des exigences fonctionnelles
+
+
+devops et autils associées
+
+automatisatio avec jenkins
+
+qualité de code  et SonarQube
+
+couverture de code(code coverage)
+
+commandes Git de base pour gérer un dépot et les branches 
+
+
+matrice  RACI
+
+modele  waterfall et effets négatifs possibles
+
+diagramme de GANTT et PERT
+
+chemin critiqueé 
+
+
+

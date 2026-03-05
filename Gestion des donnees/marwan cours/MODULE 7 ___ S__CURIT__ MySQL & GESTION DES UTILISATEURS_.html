@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Module 7 — Sécurité MySQL & Gestion des utilisateurs</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- (Optionnel) Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #111827;
+            --bg-softer: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-2: #a855f7;
+            --accent-2-soft: rgba(168, 85, 247, 0.12);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+            --card: #020617;
+            --code-bg: #020617;
+            --tag-bg: #1e293b;
+            --success: #22c55e;
+            --danger: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #020617 50%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+        }
+
+        /* ====== LAYOUT AVEC SIDEPANEL ====== */
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.95fr);
+            gap: 1.8rem;
+            align-items: flex-start;
+            margin-top: 1.8rem;
+        }
+
+        .main-content {
+            min-width: 0;
+        }
+
+        .side-panel {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            padding: 1rem 1.1rem 1.2rem;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+        }
+
+        .side-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .side-chip span.icon {
+            font-size: 0.95rem;
+        }
+
+        .side-subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin: 0 0 0.6rem;
+        }
+
+        .side-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.15rem;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.28rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: #e5e7eb;
+            text-decoration: none;
+            transition: background 0.16s ease, transform 0.1s ease;
+        }
+
+        .toc-link:hover {
+            background: rgba(56, 189, 248, 0.14);
+            transform: translateY(-0.5px);
+        }
+
+        .toc-link.active {
+            background: rgba(56, 189, 248, 0.24);
+        }
+
+        .toc-badge {
+            min-width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            color: var(--muted);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .side-panel {
+                position: static;
+                max-height: none;
+                margin-top: 1rem;
+            }
+        }
+
+        /* ====== STYLES GÉNÉRAUX ====== */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .badge span.icon {
+            font-size: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 3vw, 2.4rem);
+            margin: 0.8rem 0 0.5rem;
+            background: linear-gradient(to right, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .tag-row {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--tag-bg);
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #111827, #020617);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        h2.section-title {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2.section-title span.label {
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        h2.section-title span.label.expert {
+            background: var(--accent-2-soft);
+            color: var(--accent-2);
+        }
+
+        .section {
+            margin-top: 0.75rem;
+        }
+
+        .lesson {
+            margin-top: 1.3rem;
+            padding: 1.1rem 1.1rem 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .lesson-header {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .lesson-header span.bullet {
+            font-size: 0.9rem;
+        }
+
+        .lesson p {
+            margin: 0.3rem 0;
+            font-size: 0.92rem;
+        }
+
+        ul, ol {
+            margin: 0.3rem 0 0.3rem 1.4rem;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin: 0.1rem 0;
+        }
+
+        .code-block {
+            margin-top: 0.6rem;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at top, #020617, #020617 45%, #020617);
+            padding: 0.7rem 0.8rem;
+            position: relative;
+            font-size: 0.83rem;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.7rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        pre {
+            margin: 0.4rem 0 0 0;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            white-space: pre;
+        }
+
+        code {
+            font-family: inherit;
+        }
+
+        .table-wrap {
+            margin-top: 0.6rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.45rem 0.6rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .recap {
+            margin-top: 1.5rem;
+            padding: 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .recap-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--success);
+        }
+
+        .recap ul {
+            margin: 0.3rem 0 0.2rem 1.2rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        .mt-small {
+            margin-top: 0.4rem;
+        }
+
+        /* Impression : on masque la sidepanel */
+        @media print {
+            body {
+                background: #ffffff !important;
+            }
+            .page {
+                padding: 0;
+            }
+            .layout {
+                display: block;
+            }
+            .side-panel {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <div class="badge">
+        <span class="icon">🎯</span> MODULE 7 — SÉCURITÉ MySQL &amp; GESTION DES UTILISATEURS
+    </div>
+    <h1>SÉCURITÉ MySQL &amp; GESTION DES UTILISATEURS</h1>
+    <p class="subtitle">
+        Sécuriser le serveur MySQL, gérer les utilisateurs, les rôles, les privilèges et les sauvegardes comme en production.
+    </p>
+    <div class="tag-row">
+        <span class="tag">MySQL</span>
+        <span class="tag">Sécurité</span>
+        <span class="tag">Utilisateurs &amp; rôles</span>
+        <span class="tag">OFPPT</span>
+    </div>
+
+    <div class="layout">
+        <!-- Contenu principal -->
+        <div class="main-content">
+
+            <!-- Intro cards -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟦 PARTIE A — NIVEAU DÉBUTANT
+                        </div>
+                        <div class="level-pill">
+                            ⭐ Niveau débutant
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Bases de la sécurité MySQL : sauvegardes, utilisateurs, privilèges et bonnes pratiques simples.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟪 PARTIE B — NIVEAU EXPERT
+                        </div>
+                        <div class="level-pill">
+                            🚀 Niveau expert
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Rôles, niveaux de privilèges, sécurité réseau, architecture professionnelle et cas concrets.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PARTIE A — Débutant -->
+            <h2 class="section-title" id="partie-a">
+                <span class="label">Débutant</span>
+                <span>🟦 PARTIE A — NIVEAU DÉBUTANT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Qu'est-ce que la sécurité d’une BDD ? -->
+                <div class="lesson" id="a1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Qu’est-ce que la sécurité d’une base de données ?</span>
+                    </div>
+                    <p>
+                        La sécurité dans MySQL protège :
+                    </p>
+                    <ol>
+                        <li>1️⃣ Les données</li>
+                        <li>2️⃣ Le serveur MySQL lui-même</li>
+                        <li>3️⃣ Les utilisateurs qui y accèdent</li>
+                        <li>4️⃣ Le réseau qui transporte les données</li>
+                    </ol>
+                    <p class="mt-small">Objectifs :</p>
+                    <ul>
+                        <li>✔ Confidentialité</li>
+                        <li>✔ Intégrité</li>
+                        <li>✔ Disponibilité</li>
+                    </ul>
+                </div>
+
+                <!-- 2. 9 bonnes pratiques -->
+                <div class="lesson" id="a2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Les 9 bonnes pratiques essentielles (OFPPT)</span>
+                    </div>
+                    <p>Selon ton document OFPPT :</p>
+                    <ul>
+                        <li>✔ Sécuriser physiquement les serveurs</li>
+                        <li>✔ Utiliser un serveur de base de données séparé</li>
+                        <li>✔ Configurer un proxy HTTPS</li>
+                        <li>✔ Activer un protocole de cryptage (SSL/TLS)</li>
+                        <li>✔ Faire des sauvegardes régulières</li>
+                        <li>✔ Mettre à jour les applications</li>
+                        <li>✔ Utiliser une authentification forte</li>
+                        <li>✔ Attribuer des rôles adaptés aux utilisateurs</li>
+                        <li>✔ Éviter les ports par défaut</li>
+                    </ul>
+                </div>
+
+                <!-- 3. Sauvegarder une base -->
+                <div class="lesson" id="a3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Sauvegarder une base de données</span>
+                    </div>
+                    <p>
+                        La commande la plus utilisée : <code>mysqldump</code>
+                    </p>
+                    <p><strong>✔ Sauvegarder une BDD complète :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">Shell</div>
+<pre><code>mysqldump -u root -p nom_bd &gt; sauvegarde.sql
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. Restaurer une base -->
+                <div class="lesson" id="a4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Restaurer une base</span>
+                    </div>
+                    <p><strong>Étape 1 : créer la base</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE DATABASE nom_bd;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Étape 2 : restaurer</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">Shell</div>
+<pre><code>mysql -u root -p nom_bd &lt; sauvegarde.sql
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 5. Créer un utilisateur -->
+                <div class="lesson" id="a5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Créer un utilisateur MySQL</span>
+                    </div>
+                    <p><strong>Syntaxe officielle :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE USER 'login'@'hote'
+IDENTIFIED BY 'mot_de_passe';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Exemples :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE USER 'saadi'@'localhost'
+IDENTIFIED BY 'pass123';
+
+CREATE USER 'bensaid'@'194.28.12.4'
+IDENTIFIED BY 'bensaid99';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Utilisateur pouvant se connecter de partout :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE USER 'hanane'@'%'
+IDENTIFIED BY 'mdp123';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. Modifier / supprimer utilisateur -->
+                <div class="lesson" id="a6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Modifier / supprimer un utilisateur</span>
+                    </div>
+                    <p><strong>Renommer :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>RENAME USER 'ancien'@'localhost'
+TO 'nouveau'@'localhost';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Changer le mot de passe :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SET PASSWORD FOR 'login'@'localhost'
+    = PASSWORD('nouveau_mdp');
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Supprimer :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DROP USER 'login'@'localhost';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Accorder des privilèges -->
+                <div class="lesson" id="a7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Accorder des privilèges</span>
+                    </div>
+                    <p><strong>Syntaxe :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>GRANT privilège
+ON objet
+TO utilisateur;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Exemple réel (documentation OFPPT) :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>GRANT SELECT, INSERT, UPDATE, DELETE
+ON eshop_app_db.clients
+TO 'saadi'@'localhost';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Accorder SELECT sur toutes les bases :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>GRANT SELECT ON *.*
+TO 'saadi'@'localhost';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 8. Retirer un privilège -->
+                <div class="lesson" id="a8">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>8. Retirer un privilège</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>REVOKE INSERT
+ON eshop_app_db.clients
+FROM 'saadi'@'localhost';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 9. Voir utilisateurs & privilèges -->
+                <div class="lesson" id="a9">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>9. Voir les utilisateurs et leurs privilèges</span>
+                    </div>
+                    <p><strong>Liste des utilisateurs :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT user, host
+FROM mysql.user;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Voir les privilèges d’un utilisateur :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SHOW GRANTS FOR 'saadi'@'localhost';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- Récap débutant -->
+                <div class="recap" id="a-recap">
+                    <div class="recap-title">
+                        🟦 Résumé Débutant
+                    </div>
+                    <p>Tu sais maintenant :</p>
+                    <ul>
+                        <li>✔ sauvegarder et restaurer une base via <code>mysqldump</code></li>
+                        <li>✔ créer, modifier et supprimer un utilisateur MySQL</li>
+                        <li>✔ accorder et retirer des privilèges</li>
+                        <li>✔ lister les utilisateurs et leurs droits</li>
+                        <li>✔ comprendre les bonnes pratiques de sécurité de base</li>
+                    </ul>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- PARTIE B — Expert -->
+            <h2 class="section-title" id="partie-b">
+                <span class="label expert">Expert</span>
+                <span>🟪 PARTIE B — NIVEAU EXPERT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Niveaux de privilèges -->
+                <div class="lesson" id="b1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Comprendre les niveaux de privilèges</span>
+                    </div>
+                    <p>
+                        MySQL permet d’accorder des permissions à 4 niveaux :
+                    </p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Niveau</th>
+                                <th>Exemples</th>
+                                <th>Usage</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Global <code>*.*</code></td>
+                                <td><code>SELECT, ALL</code></td>
+                                <td>Administrateurs</td>
+                            </tr>
+                            <tr>
+                                <td>Base <code>nom_bd.*</code></td>
+                                <td><code>SELECT, INSERT</code></td>
+                                <td>Applications</td>
+                            </tr>
+                            <tr>
+                                <td>Table <code>nom_bd.table</code></td>
+                                <td><code>SELECT, UPDATE</code></td>
+                                <td>Contrôle fin</td>
+                            </tr>
+                            <tr>
+                                <td>Routine</td>
+                                <td><code>EXECUTE</code></td>
+                                <td>Procédures/fonctions</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Liste privilèges importants -->
+                <div class="lesson" id="b2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Liste des privilèges importants</span>
+                    </div>
+                    <ul>
+                        <li>✔ <code>SELECT / INSERT / UPDATE / DELETE</code></li>
+                        <li>✔ <code>CREATE TABLE / ALTER / DROP</code></li>
+                        <li>✔ <code>CREATE VIEW / CREATE ROUTINE / EXECUTE</code></li>
+                        <li>✔ <code>LOCK TABLES</code></li>
+                        <li>✔ <code>GRANT OPTION</code> → permet d’attribuer des privilèges à d’autres (dangereux ⚠️)</li>
+                    </ul>
+                </div>
+
+                <!-- 3. Rôles MySQL -->
+                <div class="lesson" id="b3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Les rôles MySQL (professionnels)</span>
+                    </div>
+                    <p>Ton document OFPPT introduit les rôles :</p>
+                    <p><strong>✔ Créer un rôle :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE ROLE 'webdeveloper';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ Accorder des privilèges au rôle :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>GRANT SELECT ON mysql.user
+TO 'webdeveloper';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ Associer un utilisateur à un rôle :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>GRANT 'webdeveloper'
+TO 'rh_salmi'@'entreprise.com';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ Activer un rôle :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SET ROLE 'webdeveloper';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ Définir un rôle par défaut :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE USER 'u2'@'%'
+IDENTIFIED BY 'pass'
+DEFAULT ROLE 'webdeveloper';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. Meilleures pratiques pro -->
+                <div class="lesson" id="b4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Meilleures pratiques de sécurité (professionnelles)</span>
+                    </div>
+                    <ul>
+                        <li>
+                            <strong>✔ 1. Ne jamais utiliser root pour une application</strong><br />
+                            Créer un utilisateur dédié :
+                            <div class="code-block mt-small">
+                                <div class="code-label">SQL</div>
+<pre><code>CREATE USER 'app_user'@'localhost'
+IDENTIFIED BY 'appPass2024';
+
+GRANT SELECT, INSERT, UPDATE
+ON shop_db.* TO 'app_user'@'localhost';
+</code></pre>
+                            </div>
+                        </li>
+                        <li class="mt-small">
+                            <strong>✔ 2. Séparer les environnements</strong><br />
+                            dev / test / production (avec comptes très restreints)
+                        </li>
+                        <li>
+                            <strong>✔ 3. Interdire l’accès root via réseau</strong><br />
+                            Modifier <code>my.cnf</code> :
+                            <div class="code-block mt-small">
+                                <div class="code-label">Config</div>
+<pre><code>skip-networking
+bind-address = 127.0.0.1
+</code></pre>
+                            </div>
+                        </li>
+                        <li>
+                            <strong>✔ 4. Activer SSL/TLS pour les connexions distantes</strong><br />
+                            Obligatoire dans les entreprises.
+                        </li>
+                        <li>
+                            <strong>✔ 5. Toujours faire une sauvegarde avant un changement critique</strong><br />
+                            <div class="code-block mt-small">
+                                <div class="code-label">Shell</div>
+<pre><code>mysqldump -u root -p --all-databases &gt; save_all.sql
+</code></pre>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- 5. Architecture de sécurité idéale -->
+                <div class="lesson" id="b5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Architecture de sécurité idéale</span>
+                    </div>
+                    <ul>
+                        <li><strong>Firewall :</strong> ports limités, MySQL pas accessible publiquement</li>
+                        <li><strong>Proxy HTTPS :</strong> cryptage des flux</li>
+                        <li><strong>MySQL :</strong> sécurisé, rôles, privilèges, configuration stricte</li>
+                        <li><strong>Application :</strong> validation des entrées, protection SQL injection</li>
+                        <li><strong>Logs + audit :</strong> triggers d’historisation, journaux de sécurité</li>
+                    </ul>
+                </div>
+
+                <!-- 6. Exemple complet pro rôle + user -->
+                <div class="lesson" id="b6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Exemple complet professionnel : rôle + utilisateur + privilèges</span>
+                    </div>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>-- créer un rôle
+CREATE ROLE 'gestion_clients';
+
+-- donner des permissions au rôle
+GRANT SELECT, INSERT, UPDATE
+ON eshop_app_db.clients
+TO 'gestion_clients';
+
+-- créer un utilisateur
+CREATE USER 'amine'@'%'
+IDENTIFIED BY 'AmiN123$$';
+
+-- attribuer le rôle
+GRANT 'gestion_clients'
+TO 'amine'@'%';
+
+-- définir le rôle par défaut
+SET DEFAULT ROLE 'gestion_clients'
+TO 'amine'@'%';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Exemple migration lecture seule -->
+                <div class="lesson" id="b7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Exemple expert : gestion des accès lors d’une migration</span>
+                    </div>
+                    <p><strong>Créer un rôle "lecture seule" :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE ROLE 'lecture_seule';
+GRANT SELECT ON *.* TO 'lecture_seule';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Assigner temporairement à des utilisateurs :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>GRANT 'lecture_seule' TO 'dev1'@'%';
+SET ROLE 'lecture_seule';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">
+                        ➜ Utile pour maintenance, audits ou migration.
+                    </p>
+                </div>
+
+                <!-- Exercices -->
+                <div class="lesson" id="b-exos">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>🟧 EXERCICES (débutant + expert)</span>
+                    </div>
+
+                    <p><strong>Débutant</strong></p>
+                    <ul>
+                        <li>Créer un utilisateur <code>"client_app"</code> avec accès uniquement <code>SELECT</code>.</li>
+                        <li>Supprimer un utilisateur et retirer ses privilèges.</li>
+                        <li>Sauvegarder et restaurer une base.</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Expert</strong></p>
+                    <ul>
+                        <li>Créer un rôle <code>"gestion_produits"</code> avec privilèges <code>SELECT/INSERT/UPDATE</code> sur <code>produits</code>.</li>
+                        <li>Assigner ce rôle à 3 utilisateurs différents.</li>
+                        <li>Interdire toute modification d’un utilisateur donné sauf <code>UPDATE</code>.</li>
+                        <li>Sécuriser un serveur MySQL exposé au réseau public (conceptuellement).</li>
+                    </ul>
+                </div>
+
+                <!-- Récap expert -->
+                <div class="recap" id="b-recap">
+                    <div class="recap-title">
+                        🟧 RÉCAP EXPERT
+                    </div>
+                    <p>Tu maîtrises maintenant :</p>
+                    <ul>
+                        <li>✔ les différents niveaux de privilèges (global, base, table, routine)</li>
+                        <li>✔ les privilèges critiques (<code>GRANT OPTION</code>, <code>EXECUTE</code>, etc.)</li>
+                        <li>✔ la création et l’utilisation de rôles MySQL</li>
+                        <li>✔ les bonnes pratiques de sécurité (root, SSL, environnements, sauvegardes)</li>
+                        <li>✔ comment construire une architecture de sécurité cohérente</li>
+                        <li>✔ des scénarios concrets : migration, lecture seule, gestion de rôles</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="footer">
+                🎉 MODULE 7 TERMINÉ
+            </div>
+        </div>
+
+        <!-- SIDEPANEL -->
+        <aside class="side-panel">
+            <div class="side-chip">
+                <span class="icon">📚</span> Plan du module
+            </div>
+            <p class="side-subtitle">
+                Navigation rapide dans les notions de sécurité MySQL &amp; gestion des utilisateurs.
+            </p>
+
+            <h3 class="side-heading">Partie A — Débutant</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#a1"><span class="toc-badge">A1</span> Qu’est-ce que la sécurité ?</a></li>
+                <li><a class="toc-link" href="#a2"><span class="toc-badge">A2</span> Bonnes pratiques OFPPT</a></li>
+                <li><a class="toc-link" href="#a3"><span class="toc-badge">A3</span> Sauvegarder une base</a></li>
+                <li><a class="toc-link" href="#a4"><span class="toc-badge">A4</span> Restaurer une base</a></li>
+                <li><a class="toc-link" href="#a5"><span class="toc-badge">A5</span> Créer un utilisateur</a></li>
+                <li><a class="toc-link" href="#a6"><span class="toc-badge">A6</span> Modifier / supprimer</a></li>
+                <li><a class="toc-link" href="#a7"><span class="toc-badge">A7</span> Accorder des privilèges</a></li>
+                <li><a class="toc-link" href="#a8"><span class="toc-badge">A8</span> Retirer un privilège</a></li>
+                <li><a class="toc-link" href="#a9"><span class="toc-badge">A9</span> Voir utilisateurs &amp; droits</a></li>
+                <li><a class="toc-link" href="#a-recap"><span class="toc-badge">A★</span> Récap Débutant</a></li>
+            </ul>
+
+            <h3 class="side-heading">Partie B — Expert</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#b1"><span class="toc-badge">B1</span> Niveaux de privilèges</a></li>
+                <li><a class="toc-link" href="#b2"><span class="toc-badge">B2</span> Privilèges importants</a></li>
+                <li><a class="toc-link" href="#b3"><span class="toc-badge">B3</span> Rôles MySQL</a></li>
+                <li><a class="toc-link" href="#b4"><span class="toc-badge">B4</span> Meilleures pratiques</a></li>
+                <li><a class="toc-link" href="#b5"><span class="toc-badge">B5</span> Architecture idéale</a></li>
+                <li><a class="toc-link" href="#b6"><span class="toc-badge">B6</span> Cas complet rôle + user</a></li>
+                <li><a class="toc-link" href="#b7"><span class="toc-badge">B7</span> Migration lecture seule</a></li>
+                <li><a class="toc-link" href="#b-exos"><span class="toc-badge">B⧉</span> Exercices</a></li>
+                <li><a class="toc-link" href="#b-recap"><span class="toc-badge">B★</span> Récap Expert</a></li>
+            </ul>
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Surligner la section active dans la sidepanel
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const sections = Array.from(document.querySelectorAll('.lesson[id], .recap[id]'));
+
+    function onScroll() {
+        const offset = 120;
+        const y = window.scrollY + offset;
+        let currentId = null;
+
+        for (const section of sections) {
+            const top = section.offsetTop;
+            const bottom = top + section.offsetHeight;
+            if (y >= top && y < bottom) {
+                currentId = section.id;
+                break;
+            }
+        }
+
+        tocLinks.forEach(link => {
+            const target = link.getAttribute('href').slice(1);
+            link.classList.toggle('active', target === currentId);
+        });
+    }
+
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+</script>
+</body>
+</html>

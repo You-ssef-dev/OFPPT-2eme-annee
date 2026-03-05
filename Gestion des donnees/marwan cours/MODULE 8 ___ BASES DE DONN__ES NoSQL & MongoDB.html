@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>MODULE 8 — Bases de Données NoSQL & MongoDB</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050816;
+      --bg-elevated: #0f172a;
+      --accent: #3b82f6;
+      --accent-soft: rgba(59, 130, 246, 0.12);
+      --accent-strong: #1d4ed8;
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --border-subtle: rgba(148, 163, 184, 0.3);
+      --radius-lg: 18px;
+      --radius-xl: 24px;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.7);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1d2440 0, #020617 40%, #000 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      width: 100%;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+      gap: 24px;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      position: sticky;
+      top: 24px;
+      align-self: flex-start;
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      padding: 20px 18px;
+      backdrop-filter: blur(16px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      max-height: calc(100vh - 48px);
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 0, #60a5fa, #1d4ed8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .sidebar-title {
+      font-weight: 600;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .sidebar-nav {
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-section-label {
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+    }
+
+    .sidebar-link {
+      display: block;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      text-decoration: none;
+      color: var(--text-soft);
+      border: 1px solid transparent;
+      transition: all 0.18s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .sidebar-link span.badge {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-soft);
+    }
+
+    .sidebar-link:hover {
+      background: var(--accent-soft);
+      color: var(--text);
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateX(2px);
+    }
+
+    .sidebar-link.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #f9fafb;
+      border-color: transparent;
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.7), 0 8px 22px rgba(30, 64, 175, 0.8);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.3);
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* MAIN CONTENT */
+    main {
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: var(--radius-xl);
+      border: 1px solid var(--border-subtle);
+      box-shadow: var(--shadow-soft);
+      padding: 24px 26px 28px;
+      overflow: hidden;
+    }
+
+    header.page-header {
+      border-radius: var(--radius-lg);
+      padding: 16px 18px 16px;
+      background: radial-gradient(circle at top left, var(--accent-soft), transparent 60%);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      margin-bottom: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header.page-header::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 150px;
+      height: 150px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.3), transparent 65%);
+      opacity: 0.4;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      background: rgba(15, 23, 42, 0.8);
+      color: var(--text-soft);
+      margin-bottom: 8px;
+    }
+
+    .chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+    }
+
+    h1 {
+      font-size: 22px;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h1 span.emoji {
+      font-size: 26px;
+    }
+
+    header.page-header p {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .separator-line {
+      margin: 18px 0 16px;
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 184, 0.45);
+      padding: 6px 10px;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      color: var(--text-soft);
+      text-align: center;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .part-section {
+      margin-bottom: 26px;
+      padding: 18px 18px 20px;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      background: radial-gradient(circle at top left, rgba(15, 118, 110, 0.15), transparent 55%);
+    }
+
+    .part-section:nth-of-type(even) {
+      background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.15), transparent 55%);
+    }
+
+    .part-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .part-title {
+      font-size: 17px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .part-tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--text-soft);
+    }
+
+    .sub-block {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(148, 163, 184, 0.4);
+    }
+
+    .sub-block:first-of-type {
+      border-top: none;
+      padding-top: 0;
+    }
+
+    .sub-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+    }
+
+    .sub-title span.star {
+      font-size: 16px;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.55;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .bullet-list {
+      list-style: none;
+      margin: 4px 0 8px 0;
+      padding-left: 0;
+    }
+
+    .bullet-list li {
+      font-size: 14px;
+      line-height: 1.5;
+      padding: 3px 0;
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+      color: var(--text);
+    }
+
+    .bullet-icon {
+      width: 18px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .code-block {
+      margin: 8px 0;
+      background: #020617;
+      border-radius: 12px;
+      border: 1px solid rgba(30, 64, 175, 0.8);
+      padding: 10px 11px;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      overflow-x: auto;
+    }
+
+    .code-block strong {
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 13px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.5);
+    }
+
+    th,
+    td {
+      padding: 7px 9px;
+      text-align: left;
+    }
+
+    thead {
+      background: rgba(15, 23, 42, 0.95);
+    }
+
+    tbody tr:nth-child(odd) {
+      background: rgba(15, 23, 42, 0.7);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(15, 23, 42, 0.3);
+    }
+
+    .level-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      color: var(--text-soft);
+    }
+
+    .exercises {
+      background: radial-gradient(circle at top left, rgba(234, 179, 8, 0.18), transparent 55%);
+    }
+
+    .exercises-list {
+      counter-reset: exo;
+      margin-top: 6px;
+    }
+
+    .exercises-list li {
+      counter-increment: exo;
+      padding-left: 6px;
+    }
+
+    .exercises-list li::before {
+      content: counter(exo) ". ";
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .layout {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      .sidebar {
+        position: static;
+        flex-direction: row;
+        align-items: center;
+        max-height: none;
+        overflow-x: auto;
+        padding: 12px 14px;
+        gap: 14px;
+      }
+
+      .sidebar-header {
+        flex-shrink: 0;
+      }
+
+      .sidebar-nav {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 6px;
+        margin-top: 0;
+      }
+
+      .sidebar-link {
+        white-space: nowrap;
+        font-size: 12px;
+        padding-inline: 10px;
+      }
+
+      main {
+        padding: 16px 14px 20px;
+      }
+
+      header.page-header {
+        padding: 14px 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- SIDE PANEL -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo">8</div>
+        <div>
+          <div class="sidebar-title">Bases NoSQL & MongoDB</div>
+          <div class="sidebar-subtitle">Parcours complet OFPPT</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div>
+          <div class="sidebar-section-label">Module</div>
+          <a href="#top" class="sidebar-link active">
+            <span>🎯 Module 8</span>
+            <span class="badge">Vue d’ensemble</span>
+          </a>
+        </div>
+
+        <div>
+          <div class="sidebar-section-label">Parties</div>
+          <a href="#partie-a" class="sidebar-link">
+            <span>🟦 Partie A</span>
+            <span class="badge">Intro NoSQL</span>
+          </a>
+          <a href="#partie-b" class="sidebar-link">
+            <span>🟦 Partie B</span>
+            <span class="badge">Modélisation</span>
+          </a>
+          <a href="#partie-c" class="sidebar-link">
+            <span>🟦 Partie C</span>
+            <span class="badge">Installation</span>
+          </a>
+          <a href="#partie-d" class="sidebar-link">
+            <span>🟦 Partie D</span>
+            <span class="badge">CRUD</span>
+          </a>
+          <a href="#partie-e" class="sidebar-link">
+            <span>🟦 Partie E</span>
+            <span class="badge">Agrégation</span>
+          </a>
+          <a href="#partie-f" class="sidebar-link">
+            <span>🟦 Partie F</span>
+            <span class="badge">Index</span>
+          </a>
+          <a href="#partie-g" class="sidebar-link">
+            <span>🟦 Partie G</span>
+            <span class="badge">Sécurité</span>
+          </a>
+          <a href="#partie-h" class="sidebar-link">
+            <span>🟦 Partie H</span>
+            <span class="badge">PyMongo</span>
+          </a>
+          <a href="#partie-i" class="sidebar-link">
+            <span>🟦 Partie I</span>
+            <span class="badge">Import/Export</span>
+          </a>
+          <a href="#exercices" class="sidebar-link">
+            <span>🟧 Exercices</span>
+            <span class="badge">Pratique</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        🎓 Niveau : Débutant → Expert<br />
+        ✅ Conforme OFPPT – Version complète
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main>
+      <header class="page-header" id="top">
+        <div class="chip">
+          <span class="chip-dot"></span>
+          <span>MODULE 8 — NoSQL & MongoDB</span>
+        </div>
+        <h1>
+          <span class="emoji">🎯</span>
+          <span>MODULE 8 — BASES DE DONNÉES NoSQL & MongoDB (VERSION COMPLÈTE)</span>
+        </h1>
+        <p>(Refait entièrement, très détaillé, conforme OFPPT)</p>
+      </header>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE A — INTRODUCTION NoSQL (Débutant)  
+        ===============================
+      </div>
+
+      <!-- PARTIE A -->
+      <section class="part-section" id="partie-a">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE A — INTRODUCTION NoSQL
+          </div>
+          <span class="level-badge">Niveau : Débutant</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Pourquoi le NoSQL ?</span>
+          </div>
+
+          <p>Le SQL a dominé pendant 40 ans, mais il présente des limites :</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">❌</span><span>Scalabilité verticale</span></li>
+            <li><span class="bullet-icon">❌</span><span>Données non structurées difficiles à stocker</span></li>
+            <li><span class="bullet-icon">❌</span><span>Taux d’écriture énorme difficile à absorber</span></li>
+            <li><span class="bullet-icon">❌</span><span>Modifications de schéma compliquées</span></li>
+          </ul>
+
+          <p>Les applications modernes (réseaux sociaux, big data, e-commerce, IoT) ont besoin de :</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>Scalabilité horizontale</span></li>
+            <li><span class="bullet-icon">✔</span><span>Flexibilité</span></li>
+            <li><span class="bullet-icon">✔</span><span>Rapidité</span></li>
+            <li><span class="bullet-icon">✔</span><span>Stockage massif</span></li>
+          </ul>
+
+          <p>👉 C'est là que les bases NoSQL sont apparues.</p>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Types de bases NoSQL</span>
+          </div>
+
+          <p>Il existe 4 grandes familles :</p>
+
+          <p><strong>1️⃣ Base clé-valeur (Key-Value)</strong></p>
+          <p>Exemples : Redis, DynamoDB</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>Ultra rapide</span></li>
+            <li><span class="bullet-icon">✔</span><span>Idéal pour sessions, tokens, cache</span></li>
+          </ul>
+
+          <p><strong>2️⃣ Base orientée documents (Document Store)</strong></p>
+          <p>Exemples : MongoDB, CouchDB</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>Stocke des documents JSON</span></li>
+            <li><span class="bullet-icon">✔</span><span>Très flexible</span></li>
+            <li><span class="bullet-icon">✔</span><span>Modélisation simple</span></li>
+          </ul>
+
+          <p><strong>3️⃣ Base orientée colonnes (Column Store)</strong></p>
+          <p>Exemples : Cassandra, HBase</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>Parfaite pour les Big Data</span></li>
+            <li><span class="bullet-icon">✔</span><span>Optimisée pour les écritures massives</span></li>
+          </ul>
+
+          <p><strong>4️⃣ Base orientée graphes (Graph DB)</strong></p>
+          <p>Exemples : Neo4j</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>Relations complexes</span></li>
+            <li><span class="bullet-icon">✔</span><span>Réseaux sociaux, recommandations</span></li>
+          </ul>
+
+          <p>👉 MongoDB = Base orientée documents.</p>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. JSON &amp; BSON (format de stockage MongoDB)</span>
+          </div>
+
+          <p>MongoDB utilise JSON pour la présentation<br />
+            et BSON pour le stockage interne (plus rapide, typé).</p>
+
+          <p>Exemple JSON :</p>
+          <div class="code-block">
+            {
+            <br />&nbsp;&nbsp;"nom": "Salma",
+            <br />&nbsp;&nbsp;"age": 22,
+            <br />&nbsp;&nbsp;"ville": "Agadir"
+            <br />}
+          </div>
+
+          <p>Types supportés :</p>
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>string</span></li>
+            <li><span class="bullet-icon">✔</span><span>integer</span></li>
+            <li><span class="bullet-icon">✔</span><span>double</span></li>
+            <li><span class="bullet-icon">✔</span><span>boolean</span></li>
+            <li><span class="bullet-icon">✔</span><span>object</span></li>
+            <li><span class="bullet-icon">✔</span><span>array</span></li>
+            <li><span class="bullet-icon">✔</span><span>null</span></li>
+            <li><span class="bullet-icon">✔</span><span>date</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE B — MODÉLISATION DOCUMENTAIRE (Intermédiaire)  
+        ===============================
+      </div>
+
+      <!-- PARTIE B -->
+      <section class="part-section" id="partie-b">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE B — MODÉLISATION DOCUMENTAIRE
+          </div>
+          <span class="level-badge">Niveau : Intermédiaire</span>
+        </div>
+
+        <p>MongoDB n’impose pas de schéma strict → tu choisis ta structure selon le besoin.</p>
+        <p>Deux stratégies :</p>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Embedding (imbriqué)</span>
+          </div>
+
+          <div class="code-block">
+            {
+            <br />&nbsp;&nbsp;"client": "Ali",
+            <br />&nbsp;&nbsp;"commandes": [
+            <br />&nbsp;&nbsp;&nbsp;&nbsp;{ "ref": 1, "total": 800 },
+            <br />&nbsp;&nbsp;&nbsp;&nbsp;{ "ref": 2, "total": 500 }
+            <br />&nbsp;&nbsp;]
+            <br />}
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>rapide</span></li>
+            <li><span class="bullet-icon">✔</span><span>une seule lecture</span></li>
+            <li><span class="bullet-icon">✔</span><span>idéal pour relations 1-N</span></li>
+          </ul>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Linking (référencement)</span>
+          </div>
+
+          <div class="code-block">
+            {
+            <br />&nbsp;&nbsp;"client": "Ali",
+            <br />&nbsp;&nbsp;"commande_id": 22
+            <br />}
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>documents plus légers</span></li>
+            <li><span class="bullet-icon">✔</span><span>meilleures mises à jour</span></li>
+            <li><span class="bullet-icon">✔</span><span>idéal pour N-N ou gros documents</span></li>
+          </ul>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. Bonnes pratiques de modélisation</span>
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">✔</span><span>Mettre les données utilisées ensemble dans le même document</span></li>
+            <li><span class="bullet-icon">✔</span><span>Éviter les documents &gt; 16 Mo (limite MongoDB)</span></li>
+            <li><span class="bullet-icon">✔</span><span>Utiliser l’embedding pour 1-N sans croissance importante</span></li>
+            <li><span class="bullet-icon">✔</span><span>Utiliser les références pour N-N ou données volumineuses</span></li>
+          </ul>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE C — INSTALLATION &amp; OUTILS MongoDB (Débutant)  
+        ===============================
+      </div>
+
+      <!-- PARTIE C -->
+      <section class="part-section" id="partie-c">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE C — INSTALLATION &amp; OUTILS MongoDB
+          </div>
+          <span class="level-badge">Niveau : Débutant</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Installation Windows</span>
+          </div>
+
+          <ul class="bullet-list">
+            <li><span class="bullet-icon">•</span><span>Télécharger MongoDB Community Server</span></li>
+            <li><span class="bullet-icon">•</span><span>Installer le service mongod</span></li>
+            <li><span class="bullet-icon">•</span><span>Installer MongoDB Compass (interface graphique)</span></li>
+          </ul>
+
+          <p>Lancer le serveur :</p>
+          <p>auto : service Windows</p>
+          <p>manuel :</p>
+          <div class="code-block">
+            mongod
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Installation Linux (Ubuntu)</span>
+          </div>
+
+          <div class="code-block">
+            sudo apt update<br />
+            sudo apt install -y mongodb<br />
+            sudo systemctl start mongodb<br />
+            sudo systemctl enable mongodb
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. Lancer le shell MongoDB</span>
+          </div>
+
+          <div class="code-block">
+            mongo
+          </div>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE D — CRUD MongoDB (Débutant → Intermédiaire)  
+        ===============================
+      </div>
+
+      <!-- PARTIE D -->
+      <section class="part-section" id="partie-d">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE D — CRUD MongoDB
+          </div>
+          <span class="level-badge">Niveau : Débutant → Intermédiaire</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Créer une base</span>
+          </div>
+          <div class="code-block">
+            use boutique
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Créer une collection</span>
+          </div>
+          <div class="code-block">
+            db.createCollection("clients")
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. Insert (ajout)</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.insertOne({ nom: "Ali", ville: "Agadir" })
+          </div>
+
+          <p>Plusieurs :</p>
+
+          <div class="code-block">
+            db.clients.insertMany([{ nom: "Sara" }, { nom: "Nadia" }])
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>4. find() → lecture</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.find()<br />
+            db.clients.find({ ville: "Agadir" })<br />
+            db.clients.find({ age: { $gt: 18 } })
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>5. update()</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.updateOne(<br />
+            &nbsp;&nbsp;{ nom: "Ali" },<br />
+            &nbsp;&nbsp;{ $set: { ville: "Marrakech" } }<br />
+            )
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>6. delete()</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.deleteOne({ nom: "Ali" })
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>7. Opérateurs MongoDB</span>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Opérateur</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>$set</td>
+                <td>Modifier une valeur</td>
+              </tr>
+              <tr>
+                <td>$unset</td>
+                <td>Supprimer une clé</td>
+              </tr>
+              <tr>
+                <td>$inc</td>
+                <td>Incrément</td>
+              </tr>
+              <tr>
+                <td>$push</td>
+                <td>Ajouter au tableau</td>
+              </tr>
+              <tr>
+                <td>$pull</td>
+                <td>Retirer du tableau</td>
+              </tr>
+              <tr>
+                <td>$regex</td>
+                <td>Recherche texte</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>8. Tri &amp; projection (filtres)</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.find({}, { nom:1, ville:1 }).sort({ nom: 1 })
+          </div>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE E — AGRÉGATION (Niveau Expert)  
+        ===============================
+      </div>
+
+      <!-- PARTIE E -->
+      <section class="part-section" id="partie-e">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE E — AGRÉGATION
+          </div>
+          <span class="level-badge">Niveau : Expert</span>
+        </div>
+
+        <p>MongoDB possède un pipeline d’agrégation très puissant.</p>
+
+        <p>Exemple : total des achats :</p>
+        <div class="code-block">
+          db.clients.aggregate([<br />
+          &nbsp;&nbsp;{ $unwind: "$achats" },<br />
+          &nbsp;&nbsp;{ $group: { _id: "$nom", total: { $sum: "$achats.prix" } } }<br />
+          ])
+        </div>
+
+        <p>Étapes importantes :</p>
+        <ul class="bullet-list">
+          <li><span class="bullet-icon">$match</span><span>: filtrer</span></li>
+          <li><span class="bullet-icon">$project</span><span>: remodeler</span></li>
+          <li><span class="bullet-icon">$unwind</span><span>: éclater les tableaux</span></li>
+          <li><span class="bullet-icon">$group</span><span>: regrouper / calculs</span></li>
+          <li><span class="bullet-icon">$sort</span><span>: trier</span></li>
+          <li><span class="bullet-icon">$limit</span><span>: limiter</span></li>
+        </ul>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE F — INDEX &amp; PERFORMANCE (Expert)  
+        ===============================
+      </div>
+
+      <!-- PARTIE F -->
+      <section class="part-section" id="partie-f">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE F — INDEX &amp; PERFORMANCE
+          </div>
+          <span class="level-badge">Niveau : Expert</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Créer un index</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.createIndex({ nom: 1 })
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Index composés</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.createIndex({ nom: 1, ville: -1 })
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. Index TEXT</span>
+          </div>
+
+          <div class="code-block">
+            db.articles.createIndex({ contenu: "text" })
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>4. Index TTL (expiration automatique)</span>
+          </div>
+
+          <div class="code-block">
+            db.sessions.createIndex(<br />
+            &nbsp;&nbsp;{ date: 1 },<br />
+            &nbsp;&nbsp;{ expireAfterSeconds: 3600 }<br />
+            )
+          </div>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE G — SÉCURITÉ MongoDB (Expert)  
+        ===============================
+      </div>
+
+      <!-- PARTIE G -->
+      <section class="part-section" id="partie-g">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE G — SÉCURITÉ MongoDB
+          </div>
+          <span class="level-badge">Niveau : Expert</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Activer l’authentification</span>
+          </div>
+
+          <p>Éditer le fichier /etc/mongod.conf :</p>
+          <div class="code-block">
+            security:<br />
+            &nbsp;&nbsp;authorization: enabled
+          </div>
+
+          <p>Redémarrer :</p>
+          <div class="code-block">
+            sudo systemctl restart mongod
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Créer un utilisateur admin</span>
+          </div>
+
+          <div class="code-block">
+            db.createUser({<br />
+            &nbsp;&nbsp;user: "admin",<br />
+            &nbsp;&nbsp;pwd: "Pass2024",<br />
+            &nbsp;&nbsp;roles: [ "userAdminAnyDatabase", "dbAdminAnyDatabase", "readWriteAnyDatabase" ]<br />
+            })
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. Sécuriser le réseau</span>
+          </div>
+
+          <p>Dans mongod.conf :</p>
+          <div class="code-block">
+            bindIp: 127.0.0.1
+          </div>
+
+          <p>→ Empêche l’accès extérieur (sauf exceptions).</p>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>4. Connexions TLS/SSL</span>
+          </div>
+
+          <p>Recommandé en production.</p>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE H — MongoDB + Python (PyMongo)  
+        ===============================
+      </div>
+
+      <!-- PARTIE H -->
+      <section class="part-section" id="partie-h">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE H — MongoDB + Python (PyMongo)
+          </div>
+          <span class="level-badge">Niveau : Intermédiaire → Expert</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>1. Installer PyMongo</span>
+          </div>
+
+          <div class="code-block">
+            pip install pymongo
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>2. Connexion Python → MongoDB</span>
+          </div>
+
+          <div class="code-block">
+            from pymongo import MongoClient<br /><br />
+            client = MongoClient("mongodb://localhost:27017/")<br />
+            db = client["boutique"]
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>3. Insérer en Python</span>
+          </div>
+
+          <div class="code-block">
+            db.clients.insert_one({"nom": "Ali", "ville": "Agadir"})
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>4. Lire en Python</span>
+          </div>
+
+          <div class="code-block">
+            for c in db.clients.find({"ville": "Agadir"}):<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;print(c)
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>5. Agrégation Python</span>
+          </div>
+
+          <div class="code-block">
+            pipeline = [<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{ "$unwind": "$achats" },<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;{ "$group": { "_id": "$nom", "total": { "$sum": "$achats.prix" } } }<br />
+            ]<br /><br />
+            for doc in db.clients.aggregate(pipeline):<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;print(doc)
+          </div>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟦 PARTIE I — Import / Export &amp; Sauvegardes  
+        ===============================
+      </div>
+
+      <!-- PARTIE I -->
+      <section class="part-section" id="partie-i">
+        <div class="part-header">
+          <div class="part-title">
+            🟦 PARTIE I — Import / Export &amp; Sauvegardes
+          </div>
+          <span class="level-badge">Niveau : Intermédiaire</span>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>Importer un fichier JSON</span>
+          </div>
+
+          <div class="code-block">
+            mongoimport --db=boutique --collection=clients --file=clients.json --jsonArray
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>Exporter une collection</span>
+          </div>
+
+          <div class="code-block">
+            mongoexport --db=boutique --collection=clients --out=clients.json
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>Sauvegarde complète</span>
+          </div>
+
+          <div class="code-block">
+            mongodump --out=/sauvegardes/
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-title">
+            <span class="star">⭐</span>
+            <span>Restauration</span>
+          </div>
+
+          <div class="code-block">
+            mongorestore /sauvegardes/
+          </div>
+        </div>
+      </section>
+
+      <div class="separator-line">
+        ===============================  
+        🟧 EXERCICES (Débutant → Expert)  
+        ===============================
+      </div>
+
+      <!-- EXERCICES -->
+      <section class="part-section exercises" id="exercices">
+        <div class="part-header">
+          <div class="part-title">
+            🟧 EXERCICES (Débutant → Expert)
+          </div>
+          <span class="level-badge">Mise en pratique</span>
+        </div>
+
+        <ul class="bullet-list exercises-list">
+          <li>Créer une base “ecole” et une collection “etudiants"</li>
+          <li>Insérer 5 documents complets</li>
+          <li>Trouver tous les étudiants de Casablanca</li>
+          <li>Modifier la ville d’un étudiant</li>
+          <li>Supprimer un étudiant</li>
+          <li>Créer un index (nom, ville)</li>
+          <li>Créer une agrégation pour compter les étudiants par ville</li>
+          <li>Importer un fichier JSON</li>
+          <li>Créer un utilisateur “lecteur” avec rôle readOnly</li>
+          <li>Faire une requête PyMongo pour afficher les étudiants triés par âge</li>
+        </ul>
+
+        <p style="margin-top:10px;">🎉 MODULE 8 — VERSION COMPLÈTE TERMINÉ !</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // Scrollspy simple pour la sidepanel
+    const sections = document.querySelectorAll(
+      "#top, #partie-a, #partie-b, #partie-c, #partie-d, #partie-e, #partie-f, #partie-g, #partie-h, #partie-i, #exercices"
+    );
+    const navLinks = document.querySelectorAll(".sidebar-link");
+
+    function onScroll() {
+      let currentId = "top";
+      const scrollPos = window.scrollY + 120;
+
+      sections.forEach((section) => {
+        const rect = section.getBoundingClientRect();
+        const offsetTop = window.scrollY + rect.top;
+        if (offsetTop <= scrollPos) {
+          currentId = section.id;
+        }
+      });
+
+      navLinks.forEach((link) => {
+        const href = link.getAttribute("href").replace("#", "");
+        if (href === currentId) {
+          link.classList.add("active");
+        } else {
+          link.classList.remove("active");
+        }
+      });
+    }
+
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1139 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Module 3 — Procédures stockées & Fonctions MySQL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- (Optionnel) Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #111827;
+            --bg-softer: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-2: #a855f7;
+            --accent-2-soft: rgba(168, 85, 247, 0.12);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+            --card: #020617;
+            --code-bg: #020617;
+            --tag-bg: #1e293b;
+            --success: #22c55e;
+            --danger: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #020617 50%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+        }
+
+        /* ====== LAYOUT AVEC SIDEPANEL ====== */
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.95fr);
+            gap: 1.8rem;
+            align-items: flex-start;
+            margin-top: 1.8rem;
+        }
+
+        .main-content {
+            min-width: 0;
+        }
+
+        .side-panel {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            padding: 1rem 1.1rem 1.2rem;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+        }
+
+        .side-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .side-chip span.icon {
+            font-size: 0.95rem;
+        }
+
+        .side-subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin: 0 0 0.6rem;
+        }
+
+        .side-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.15rem;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.28rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: #e5e7eb;
+            text-decoration: none;
+            transition: background 0.16s ease, transform 0.1s ease;
+        }
+
+        .toc-link:hover {
+            background: rgba(56, 189, 248, 0.14);
+            transform: translateY(-0.5px);
+        }
+
+        .toc-link.active {
+            background: rgba(56, 189, 248, 0.24);
+        }
+
+        .toc-badge {
+            min-width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            color: var(--muted);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .side-panel {
+                position: static;
+                max-height: none;
+                margin-top: 1rem;
+            }
+        }
+
+        /* ====== STYLES GÉNÉRAUX ====== */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .badge span.icon {
+            font-size: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(1.9rem, 3vw, 2.4rem);
+            margin: 0.8rem 0 0.5rem;
+            background: linear-gradient(to right, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .tag-row {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--tag-bg);
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #111827, #020617);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        h2.section-title {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2.section-title span.label {
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        h2.section-title span.label.expert {
+            background: var(--accent-2-soft);
+            color: var(--accent-2);
+        }
+
+        .section {
+            margin-top: 0.75rem;
+        }
+
+        .lesson {
+            margin-top: 1.3rem;
+            padding: 1.1rem 1.1rem 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .lesson-header {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .lesson-header span.bullet {
+            font-size: 0.9rem;
+        }
+
+        .lesson p {
+            margin: 0.3rem 0;
+            font-size: 0.92rem;
+        }
+
+        ul, ol {
+            margin: 0.3rem 0 0.3rem 1.4rem;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin: 0.1rem 0;
+        }
+
+        .code-block {
+            margin-top: 0.6rem;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at top, #020617, #020617 45%, #020617);
+            padding: 0.7rem 0.8rem;
+            position: relative;
+            font-size: 0.83rem;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.7rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        pre {
+            margin: 0.4rem 0 0 0;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            white-space: pre;
+        }
+
+        code {
+            font-family: inherit;
+        }
+
+        .tip {
+            margin-top: 0.6rem;
+            padding: 0.6rem 0.7rem;
+            border-radius: 0.75rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .tip strong {
+            color: var(--accent);
+        }
+
+        .recap {
+            margin-top: 1.5rem;
+            padding: 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .recap-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--success);
+        }
+
+        .recap ul {
+            margin: 0.3rem 0 0.2rem 1.2rem;
+        }
+
+        .callout {
+            margin-top: 1.3rem;
+            padding: 1rem 1.1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(248, 148, 54, 0.6);
+            background: radial-gradient(circle at top right, rgba(248, 148, 54, 0.18), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .callout-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--danger);
+        }
+
+        hr {
+            margin: 2rem 0 1.5rem;
+            border: none;
+            border-top: 1px solid rgba(31, 41, 55, 0.9);
+        }
+
+        .em {
+            font-style: italic;
+        }
+
+        .table-wrap {
+            margin-top: 0.6rem;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            padding: 0.45rem 0.6rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            text-align: left;
+        }
+
+        th {
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--muted);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) td {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .mt-small {
+            margin-top: 0.4rem;
+        }
+
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--muted);
+        }
+
+        /* Impression : on masque la sidepanel */
+        @media print {
+            body {
+                background: #ffffff !important;
+            }
+            .page {
+                padding: 0;
+            }
+            .layout {
+                display: block;
+            }
+            .side-panel {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header -->
+    <div class="badge">
+        <span class="icon">🎯</span> MODULE 3 — Procédures stockées &amp; Fonctions MySQL
+    </div>
+    <h1>PROCÉDURES STOCKÉES &amp; FONCTIONS MySQL</h1>
+    <p class="subtitle">
+        Création, utilisation et bonnes pratiques pour structurer ton code MySQL.
+    </p>
+    <div class="tag-row">
+        <span class="tag">MySQL</span>
+        <span class="tag">Procédures stockées</span>
+        <span class="tag">Fonctions</span>
+        <span class="tag">OFPPT</span>
+    </div>
+
+    <div class="layout">
+        <!-- Contenu principal -->
+        <div class="main-content">
+
+            <!-- Intro cards -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟦 PARTIE A — NIVEAU DÉBUTANT
+                        </div>
+                        <div class="level-pill">
+                            ⭐ Niveau débutant
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Découvrir à quoi servent les procédures et fonctions, leur syntaxe, les paramètres et l’usage de DELIMITER.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟪 PARTIE B — NIVEAU EXPERT
+                        </div>
+                        <div class="level-pill">
+                            🚀 Niveau expert
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Options avancées, gestion d’erreurs, SIGNAL/RESIGNAL, transactions et modèle de procédure professionnelle.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PARTIE A — Débutant -->
+            <h2 class="section-title" id="partie-a">
+                <span class="label">Débutant</span>
+                <span>🟦 PARTIE A — NIVEAU DÉBUTANT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Introduction -->
+                <div class="lesson" id="a1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Introduction : À quoi servent procédures &amp; fonctions ?</span>
+                    </div>
+                    <p>
+                        Les deux permettent de stocker du code MySQL réutilisable.
+                    </p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Élément</th>
+                                <th>Sert à</th>
+                                <th>Peut retourner</th>
+                                <th>S'utilise dans</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>Procédure stockée</td>
+                                <td>Automatiser une tâche</td>
+                                <td>Rien (mais peut renvoyer OUT)</td>
+                                <td>Appel direct <code>CALL</code></td>
+                            </tr>
+                            <tr>
+                                <td>Fonction</td>
+                                <td>Calculer et retourner une valeur</td>
+                                <td>Obligatoirement 1 valeur</td>
+                                <td>Dans un <code>SELECT</code></td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. Les blocs de code -->
+                <div class="lesson" id="a2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Les blocs de code</span>
+                    </div>
+                    <p>Une procédure ou une fonction commence toujours par un bloc :</p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>BEGIN
+    -- instructions SQL
+END;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">
+                        Pour écrire plusieurs instructions, il faut changer le délimiteur :
+                    </p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER $$
+
+... code ...
+
+DELIMITER ;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 3. Les fonctions : syntaxe simple -->
+                <div class="lesson" id="a3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Les fonctions : syntaxe simple</span>
+                    </div>
+                    <p><strong>Exemple débutant :</strong> fonction qui retourne le nombre de clients dans une ville</p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER $$
+
+CREATE FUNCTION nb_clients(ville VARCHAR(50))
+RETURNS INT
+BEGIN
+    RETURN (SELECT COUNT(*) FROM clients WHERE adresse = ville);
+END $$
+
+DELIMITER ;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Usage :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SELECT nb_clients('Agadir');
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">Une fonction doit toujours :</p>
+                    <ul>
+                        <li>✔ retourner une valeur</li>
+                        <li>✔ déclarer son type de retour (<code>RETURNS ...</code>)</li>
+                        <li>✔ être utilisée dans un <code>SELECT</code> ou une expression</li>
+                    </ul>
+                </div>
+
+                <!-- 4. Les procédures stockées -->
+                <div class="lesson" id="a4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Les procédures stockées</span>
+                    </div>
+                    <p><strong>Exemple simple :</strong> afficher les clients d’une ville</p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER $$
+
+CREATE PROCEDURE clients_par_ville(IN v VARCHAR(50))
+BEGIN
+    SELECT * FROM clients WHERE UPPER(adresse) = UPPER(v);
+END $$
+
+DELIMITER ;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Usage :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CALL clients_par_ville('Agadir');
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 5. Paramètres IN / OUT / INOUT -->
+                <div class="lesson" id="a5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Les paramètres IN / OUT / INOUT</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Type</th>
+                                <th>Direction</th>
+                                <th>Explication</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td>IN</td>
+                                <td>Entrée</td>
+                                <td>On donne une valeur</td>
+                            </tr>
+                            <tr>
+                                <td>OUT</td>
+                                <td>Sortie</td>
+                                <td>La procédure retourne une valeur</td>
+                            </tr>
+                            <tr>
+                                <td>INOUT</td>
+                                <td>Entrée + sortie</td>
+                                <td>La valeur peut être modifiée</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="mt-small"><strong>Exemples rapides :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>-- IN :
+(IN ville VARCHAR(50))
+
+-- OUT :
+(OUT total INT)
+
+-- Appel :
+CALL procedure(..., @sortie);
+SELECT @sortie;
+
+-- INOUT :
+(INOUT compteur INT)
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. Supprimer une procédure ou fonction -->
+                <div class="lesson" id="a6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Supprimer une procédure ou fonction</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DROP PROCEDURE nom_procedure;
+DROP FUNCTION nom_fonction;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">Afficher les procédures existantes :</p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SHOW PROCEDURE STATUS;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Pourquoi les utiliser -->
+                <div class="lesson" id="a7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Pourquoi les utiliser ?</span>
+                    </div>
+                    <ul>
+                        <li>✔ réutilisation du code</li>
+                        <li>✔ sécurité (limite les injections SQL)</li>
+                        <li>✔ performance (moins de trafic réseau)</li>
+                        <li>✔ organisation du code métier</li>
+                        <li>✔ automation de tâches</li>
+                    </ul>
+                </div>
+
+                <!-- Résumé débutant -->
+                <div class="recap" id="a-recap">
+                    <div class="recap-title">
+                        🟦 Résumé Débutant
+                    </div>
+                    <p>Tu sais maintenant :</p>
+                    <ul>
+                        <li>✔ créer &amp; utiliser des fonctions</li>
+                        <li>✔ créer &amp; utiliser des procédures</li>
+                        <li>✔ passer des paramètres IN/OUT/INOUT</li>
+                        <li>✔ structurer du code MySQL avec <code>BEGIN...END</code></li>
+                        <li>✔ utiliser <code>DELIMITER</code> correctement</li>
+                    </ul>
+                    <p class="mt-small">
+                        Tu es prêt pour les notions avancées.
+                    </p>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- PARTIE B — Expert -->
+            <h2 class="section-title" id="partie-b">
+                <span class="label expert">Expert</span>
+                <span>🟪 PARTIE B — NIVEAU EXPERT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Déclarations informatives -->
+                <div class="lesson" id="b1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Les déclarations informatives (caractéristiques des fonctions)</span>
+                    </div>
+                    <p>Une fonction peut avoir des options :</p>
+
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                            <tr>
+                                <th>Option</th>
+                                <th>Signification</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr>
+                                <td><code>DETERMINISTIC</code></td>
+                                <td>Donne toujours la même sortie si les arguments sont les mêmes</td>
+                            </tr>
+                            <tr>
+                                <td><code>READS SQL DATA</code></td>
+                                <td>Peut lire la base</td>
+                            </tr>
+                            <tr>
+                                <td><code>MODIFIES SQL DATA</code></td>
+                                <td>Peut modifier la base (rare, déconseillé dans une fonction)</td>
+                            </tr>
+                            <tr>
+                                <td><code>CONTAINS SQL</code></td>
+                                <td>Contient du SQL mais ne lit/modifie rien</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="mt-small"><strong>Exemple :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>RETURNS INT
+DETERMINISTIC
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 2. Procédures avancées -->
+                <div class="lesson" id="b2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Les procédures avancées</span>
+                    </div>
+                    <p>Les procédures peuvent :</p>
+                    <ul>
+                        <li>✔ contenir <code>IF, CASE, LOOP, WHILE, REPEAT</code></li>
+                        <li>✔ appeler d’autres procédures</li>
+                        <li>✔ utiliser des curseurs</li>
+                        <li>✔ gérer des exceptions</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Exemple complet avec OUT :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER $$
+
+CREATE PROCEDURE nb_clients_par_ville(
+    IN ville VARCHAR(50),
+    OUT total INT
+)
+BEGIN
+    SELECT COUNT(*) INTO total
+    FROM clients
+    WHERE UPPER(adresse) = UPPER(ville);
+END $$
+
+DELIMITER ;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Usage :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CALL nb_clients_par_ville('Agadir', @t);
+SELECT @t;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 3. Paramètre INOUT -->
+                <div class="lesson" id="b3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Paramètre INOUT (rare mais très puissant)</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER $$
+
+CREATE PROCEDURE incrementer(INOUT compteur INT, IN inc INT)
+BEGIN
+    SET compteur = compteur + inc;
+END $$
+
+DELIMITER ;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Usage :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SET @c = 1;
+CALL incrementer(@c, 5);  -- @c devient 6
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. Gestion d’erreurs (HANDLERS) -->
+                <div class="lesson" id="b4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Gestion d’erreurs dans une procédure (HANDLERS)</span>
+                    </div>
+
+                    <p><strong>Exemple : gérer erreur NOT FOUND</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE EXIT HANDLER FOR NOT FOUND
+    SET msg = 'Aucun client trouvé';
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>Exemple : gérer une erreur SQL générale</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE CONTINUE HANDLER FOR SQLEXCEPTION
+    SET erreur = 1;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 5. SIGNAL -->
+                <div class="lesson" id="b5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Lever une exception (SIGNAL)</span>
+                    </div>
+                    <p>Très utile pour bloquer une action interdite.</p>
+
+                    <p class="mt-small"><strong>Exemple : interdire une commande inexistante :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF nb = 0 THEN
+    SIGNAL SQLSTATE '45000'
+    SET MESSAGE_TEXT = 'Commande introuvable';
+END IF;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. RESIGNAL -->
+                <div class="lesson" id="b6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Relever l’erreur depuis un handler (RESIGNAL)</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE CONTINUE HANDLER FOR division_by_zero
+    RESIGNAL SET MESSAGE_TEXT = 'Division impossible';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Meilleure structure d’une procédure -->
+                <div class="lesson" id="b7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Meilleure structure d’une procédure professionnelle</span>
+                    </div>
+                    <p>Ordre recommandé :</p>
+                    <ol>
+                        <li>déclaration des variables</li>
+                        <li>déclaration des exceptions</li>
+                        <li>ouverture des curseurs (si besoin)</li>
+                        <li>logique métier</li>
+                        <li>validation ou rollback (si transactions)</li>
+                    </ol>
+                </div>
+
+                <!-- 8. Modèle de procédure propre -->
+                <div class="lesson" id="b8">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>8. Générer une procédure propre et maintenable</span>
+                    </div>
+                    <p>Voici un modèle :</p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DELIMITER $$
+
+CREATE PROCEDURE my_procedure(IN p_id INT, OUT message VARCHAR(255))
+BEGIN
+    DECLARE error_flag INT DEFAULT 0;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        SET error_flag = 1;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    UPDATE clients SET adresse='Test' WHERE id = p_id;
+
+    IF error_flag = 0 THEN
+        COMMIT;
+        SET message = 'OK';
+    ELSE
+        ROLLBACK;
+        SET message = 'Erreur';
+    END IF;
+
+END $$
+
+DELIMITER ;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 9. Exercices expert -->
+                <div class="lesson" id="b9">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>9. EXERCICES (niveau expert)</span>
+                    </div>
+                    <p><strong>Exercice 1</strong></p>
+                    <p>Créer une fonction <code>age_client(id)</code> retournant l’âge d’un client.</p>
+
+                    <p class="mt-small"><strong>Exercice 2</strong></p>
+                    <p>Créer une procédure qui :</p>
+                    <ul>
+                        <li>reçoit une ville en entrée (IN)</li>
+                        <li>renvoie le nombre de clients sous OUT</li>
+                        <li>renvoie "VILLE INVALIDE" si aucune ligne</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Exercice 3</strong></p>
+                    <p>Créer une procédure qui :</p>
+                    <ul>
+                        <li>parcourt la table <code>clients</code></li>
+                        <li>met à jour l’adresse "Agadir" → "Grand Agadir"</li>
+                        <li>compte combien de lignes ont été modifiées</li>
+                        <li>retourne le total via OUT</li>
+                    </ul>
+
+                    <p class="mt-small"><strong>Exercice 4</strong></p>
+                    <p>Créer une fonction qui renvoie TRUE/FALSE si un produit existe.</p>
+                </div>
+
+                <!-- Récap expert -->
+                <div class="recap" id="b-recap">
+                    <div class="recap-title">
+                        🟧 RÉCAP EXPERT
+                    </div>
+                    <p>Tu maîtrises maintenant :</p>
+                    <ul>
+                        <li>✔ options des fonctions (<code>DETERMINISTIC</code>, etc.)</li>
+                        <li>✔ gestion d’erreurs avec <code>HANDLER</code></li>
+                        <li>✔ <code>SIGNAL</code> et <code>RESIGNAL</code></li>
+                        <li>✔ paramètres <code>IN / OUT / INOUT</code> en contexte réel</li>
+                        <li>✔ procédures avec transactions et code robuste</li>
+                    </ul>
+                    <p class="mt-small">
+                        Tu peux écrire des procédures et fonctions MySQL propres, maintenables et professionnelles.
+                    </p>
+                </div>
+            </div>
+
+            <div class="footer">
+                🎉 MODULE 3 TERMINÉ !
+            </div>
+        </div>
+
+        <!-- SIDEPANEL -->
+        <aside class="side-panel">
+            <div class="side-chip">
+                <span class="icon">📚</span> Plan du module
+            </div>
+            <p class="side-subtitle">
+                Navigation rapide dans les notions de procédures stockées &amp; fonctions.
+            </p>
+
+            <h3 class="side-heading">Partie A — Débutant</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#a1"><span class="toc-badge">A1</span> Introduction</a></li>
+                <li><a class="toc-link" href="#a2"><span class="toc-badge">A2</span> Blocs de code</a></li>
+                <li><a class="toc-link" href="#a3"><span class="toc-badge">A3</span> Fonctions (base)</a></li>
+                <li><a class="toc-link" href="#a4"><span class="toc-badge">A4</span> Procédures simples</a></li>
+                <li><a class="toc-link" href="#a5"><span class="toc-badge">A5</span> Paramètres IN/OUT/INOUT</a></li>
+                <li><a class="toc-link" href="#a6"><span class="toc-badge">A6</span> DROP &amp; SHOW</a></li>
+                <li><a class="toc-link" href="#a7"><span class="toc-badge">A7</span> Pourquoi les utiliser</a></li>
+                <li><a class="toc-link" href="#a-recap"><span class="toc-badge">A★</span> Récap Débutant</a></li>
+            </ul>
+
+            <h3 class="side-heading">Partie B — Expert</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#b1"><span class="toc-badge">B1</span> Options de fonctions</a></li>
+                <li><a class="toc-link" href="#b2"><span class="toc-badge">B2</span> Procédures avancées</a></li>
+                <li><a class="toc-link" href="#b3"><span class="toc-badge">B3</span> Paramètre INOUT</a></li>
+                <li><a class="toc-link" href="#b4"><span class="toc-badge">B4</span> HANDLERS</a></li>
+                <li><a class="toc-link" href="#b5"><span class="toc-badge">B5</span> SIGNAL</a></li>
+                <li><a class="toc-link" href="#b6"><span class="toc-badge">B6</span> RESIGNAL</a></li>
+                <li><a class="toc-link" href="#b7"><span class="toc-badge">B7</span> Structure pro</a></li>
+                <li><a class="toc-link" href="#b8"><span class="toc-badge">B8</span> Modèle de procédure</a></li>
+                <li><a class="toc-link" href="#b9"><span class="toc-badge">B9</span> Exercices expert</a></li>
+                <li><a class="toc-link" href="#b-recap"><span class="toc-badge">B★</span> Récap Expert</a></li>
+            </ul>
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Surligner la section active dans la sidepanel
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const lessons = Array.from(document.querySelectorAll('.lesson[id], .recap[id]'));
+
+    function onScroll() {
+        const offset = 120;
+        const y = window.scrollY + offset;
+        let currentId = null;
+
+        for (const section of lessons) {
+            const top = section.offsetTop;
+            const bottom = top + section.offsetHeight;
+            if (y >= top && y < bottom) {
+                currentId = section.id;
+                break;
+            }
+        }
+
+        tocLinks.forEach(link => {
+            const target = link.getAttribute('href').slice(1);
+            link.classList.toggle('active', target === currentId);
+        });
+    }
+
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+</script>
+</body>
+</html>

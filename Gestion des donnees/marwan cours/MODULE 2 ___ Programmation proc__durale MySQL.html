@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Module 2 — Programmation procédurale MySQL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- (Optionnel) Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        :root {
+            --bg: #0f172a;
+            --bg-soft: #111827;
+            --bg-softer: #020617;
+            --accent: #38bdf8;
+            --accent-soft: rgba(56, 189, 248, 0.12);
+            --accent-2: #a855f7;
+            --accent-2-soft: rgba(168, 85, 247, 0.12);
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --border: #1f2937;
+            --card: #020617;
+            --code-bg: #020617;
+            --tag-bg: #1e293b;
+            --success: #22c55e;
+            --danger: #f97316;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #020617 50%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .page {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 1.5rem 3rem;
+        }
+
+        /* ====== LAYOUT PRINCIPAL AVEC SIDEPANEL ====== */
+        .layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.7fr) minmax(260px, 0.95fr);
+            gap: 1.8rem;
+            align-items: flex-start;
+            margin-top: 1.8rem;
+        }
+
+        .main-content {
+            min-width: 0;
+        }
+
+        .side-panel {
+            position: sticky;
+            top: 24px;
+            align-self: flex-start;
+            background: rgba(15, 23, 42, 0.95);
+            border-radius: 1.2rem;
+            border: 1px solid var(--border);
+            padding: 1rem 1.1rem 1.2rem;
+            box-shadow: 0 18px 40px rgba(0, 0, 0, 0.8);
+            max-height: calc(100vh - 3rem);
+            overflow-y: auto;
+        }
+
+        .side-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .side-chip span.icon {
+            font-size: 0.95rem;
+        }
+
+        .side-subtitle {
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin: 0 0 0.6rem;
+        }
+
+        .side-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+            margin: 0.8rem 0 0.3rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .toc-list li {
+            margin-bottom: 0.15rem;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.28rem 0.45rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            color: #e5e7eb;
+            text-decoration: none;
+            transition: background 0.16s ease, transform 0.1s ease;
+        }
+
+        .toc-link:hover {
+            background: rgba(56, 189, 248, 0.14);
+            transform: translateY(-0.5px);
+        }
+
+        .toc-link.active {
+            background: rgba(56, 189, 248, 0.24);
+        }
+
+        .toc-badge {
+            min-width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            color: var(--muted);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        @media (max-width: 900px) {
+            .layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .side-panel {
+                position: static;
+                max-height: none;
+                margin-top: 1rem;
+            }
+        }
+
+        /* ====== STYLES EXISTANTS ====== */
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.25rem 0.7rem;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .badge span.icon {
+            font-size: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(1.8rem, 3vw, 2.3rem);
+            margin: 0.8rem 0 0.5rem;
+            background: linear-gradient(to right, #38bdf8, #a855f7);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .tag-row {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            background: var(--tag-bg);
+            color: var(--muted);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+            gap: 1.75rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+
+        .card {
+            background: radial-gradient(circle at top left, #111827, #020617);
+            border-radius: 1.25rem;
+            border: 1px solid var(--border);
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.8);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pill {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            color: var(--muted);
+        }
+
+        h2.section-title {
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2.section-title span.label {
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            background: var(--accent-soft);
+            color: var(--accent);
+        }
+
+        h2.section-title span.label.expert {
+            background: var(--accent-2-soft);
+            color: var(--accent-2);
+        }
+
+        .section {
+            margin-top: 0.75rem;
+        }
+
+        .lesson {
+            margin-top: 1.3rem;
+            padding: 1.1rem 1.1rem 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
+        .lesson-header {
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .lesson-header span.bullet {
+            font-size: 0.9rem;
+        }
+
+        .lesson p {
+            margin: 0.3rem 0;
+            font-size: 0.92rem;
+        }
+
+        ul, ol {
+            margin: 0.3rem 0 0.3rem 1.4rem;
+            padding: 0;
+            font-size: 0.9rem;
+        }
+
+        li {
+            margin: 0.1rem 0;
+        }
+
+        .highlight-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.4rem 1.1rem;
+            margin: 0.4rem 0 0.2rem;
+            font-size: 0.9rem;
+        }
+
+        .highlight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+        }
+
+        .highlight-item span.dot {
+            font-size: 0.8rem;
+            margin-top: 0.15rem;
+        }
+
+        .code-block {
+            margin-top: 0.6rem;
+            border-radius: 0.9rem;
+            border: 1px solid rgba(31, 41, 55, 0.9);
+            background: radial-gradient(circle at top, #020617, #020617 45%, #020617);
+            padding: 0.7rem 0.8rem;
+            position: relative;
+            font-size: 0.83rem;
+            overflow-x: auto;
+        }
+
+        .code-label {
+            position: absolute;
+            top: 0.35rem;
+            right: 0.7rem;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--muted);
+        }
+
+        pre {
+            margin: 0.4rem 0 0 0;
+            font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            white-space: pre;
+        }
+
+        code {
+            font-family: inherit;
+        }
+
+        .tip {
+            margin-top: 0.6rem;
+            padding: 0.6rem 0.7rem;
+            border-radius: 0.75rem;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px dashed rgba(148, 163, 184, 0.6);
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+
+        .tip strong {
+            color: var(--accent);
+        }
+
+        .recap {
+            margin-top: 1.5rem;
+            padding: 1.1rem 1.2rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(34, 197, 94, 0.5);
+            background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.1), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .recap-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--success);
+        }
+
+        .recap ul {
+            margin: 0.3rem 0 0.2rem 1.2rem;
+        }
+
+        .callout {
+            margin-top: 1.3rem;
+            padding: 1rem 1.1rem;
+            border-radius: 1rem;
+            border: 1px solid rgba(248, 148, 54, 0.6);
+            background: radial-gradient(circle at top right, rgba(248, 148, 54, 0.18), rgba(15, 23, 42, 0.95));
+            font-size: 0.95rem;
+        }
+
+        .callout-title {
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            color: var(--danger);
+        }
+
+        hr {
+            margin: 2rem 0 1.5rem;
+            border: none;
+            border-top: 1px solid rgba(31, 41, 55, 0.9);
+        }
+
+        .em {
+            font-style: italic;
+        }
+
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.18rem 0.55rem;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            font-size: 0.75rem;
+            color: var(--muted);
+        }
+
+        .mt-small {
+            margin-top: 0.4rem;
+        }
+
+        /* Impression : on masque la sidepanel */
+        @media print {
+            body {
+                background: #ffffff !important;
+            }
+            .page {
+                padding: 0;
+            }
+            .layout {
+                display: block;
+            }
+            .side-panel {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- Header commun -->
+    <div class="badge">
+        <span class="icon">🎯</span> MODULE 2 — Programmation procédurale MySQL
+    </div>
+    <h1>BEGIN, IF, LOOP, CURSORS, HANDLERS</h1>
+    <p class="subtitle">
+        Ce module couvre des notions extraites de tes fichiers OFPPT.
+    </p>
+    <div class="tag-row">
+        <span class="tag">MySQL</span>
+        <span class="tag">SQL procédural</span>
+        <span class="tag">OFPPT</span>
+        <span class="tag">Cursors &amp; Handlers</span>
+    </div>
+
+    <!-- LAYOUT AVEC SIDEPANEL -->
+    <div class="layout">
+        <!-- Contenu principal -->
+        <div class="main-content">
+
+            <!-- Intro cards -->
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟦 PARTIE A — NIVEAU DÉBUTANT
+                        </div>
+                        <div class="level-pill">
+                            ⭐ Niveau débutant
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Bases de la programmation procédurale en MySQL : blocs, variables, conditions, boucles,
+                        curseurs et gestion simple des erreurs.
+                    </p>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            🟪 PARTIE B — NIVEAU EXPERT
+                        </div>
+                        <div class="level-pill">
+                            🚀 Niveau expert
+                        </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:var(--muted); margin:0;">
+                        Techniques avancées : portée des variables, handlers complexes, SIGNAL / RESIGNAL,
+                        curseurs avec verrouillage et événements programmés.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PARTIE A — Débutant -->
+            <h2 class="section-title" id="partie-a">
+                <span class="label">Débutant</span>
+                <span>🟦 PARTIE A — NIVEAU DÉBUTANT</span>
+            </h2>
+
+            <div class="section">
+
+                <!-- 1. Pourquoi MySQL possède un langage procédural ? -->
+                <div class="lesson" id="a1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Pourquoi MySQL possède un langage procédural ?</span>
+                    </div>
+                    <p>
+                        SQL ne contient pas de structures de contrôle (<span class="em">IF, WHILE…</span>), car ce n’est pas prévu dans la norme.
+                        MySQL ajoute donc un langage procédural, permettant de :
+                    </p>
+                    <div class="highlight-list">
+                        <div class="highlight-item">
+                            <span class="dot">✔</span>
+                            <span>créer des blocs logiques</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="dot">✔</span>
+                            <span>utiliser IF, CASE, WHILE, LOOP, REPEAT</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="dot">✔</span>
+                            <span>déclarer des variables</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="dot">✔</span>
+                            <span>gérer les erreurs</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="dot">✔</span>
+                            <span>manipuler les curseurs</span>
+                        </div>
+                        <div class="highlight-item">
+                            <span class="dot">✔</span>
+                            <span>automatiser des tâches complexes</span>
+                        </div>
+                    </div>
+                    <p class="mt-small">
+                        Tout ceci se fait dans :
+                    </p>
+                    <ul>
+                        <li>les procédures stockées</li>
+                        <li>les fonctions</li>
+                        <li>les triggers</li>
+                        <li>les événements programmés</li>
+                    </ul>
+                </div>
+
+                <!-- 2. Structure d’un bloc MySQL -->
+                <div class="lesson" id="a2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Structure d’un bloc MySQL</span>
+                    </div>
+                    <p>
+                        Tout code procédural est écrit dans un bloc :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>BEGIN
+    -- instructions
+END;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">
+                        On peut imbriquer les blocs :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>BEGIN
+   SELECT 'Bloc principal';
+   BEGIN
+       SELECT 'Bloc interne';
+   END;
+END;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 3. Les variables -->
+                <div class="lesson" id="a3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Les variables</span>
+                    </div>
+                    <p><strong>Déclarer une variable locale :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE age INT;
+DECLARE nom_client VARCHAR(100);
+DECLARE trouvé BOOLEAN DEFAULT FALSE;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small">
+                        <strong>Variables de session (externes)</strong><br />
+                        Utilisées hors des procédures :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SET @max_prix := 100;
+SELECT * FROM produit WHERE pu = @max_prix;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. Les structures conditionnelles -->
+                <div class="lesson" id="a4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. Les structures conditionnelles</span>
+                    </div>
+
+                    <p><strong>✔ IF simple</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF age &lt; 18 THEN
+   SET statut = 'Mineur';
+END IF;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ IF – ELSE</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF age &gt;= 18 THEN
+   SET statut = 'Adulte';
+ELSE
+   SET statut = 'Mineur';
+END IF;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ IF – ELSEIF – ELSE</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF note &gt;= 16 THEN
+   SET mention = 'TB';
+ELSEIF note &gt;= 14 THEN
+   SET mention = 'B';
+ELSEIF note &gt;= 12 THEN
+   SET mention = 'AB';
+ELSE
+   SET mention = 'R';
+END IF;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 5. Les structures CASE -->
+                <div class="lesson" id="a5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Les structures CASE</span>
+                    </div>
+
+                    <p><strong>✔ CASE avec sélecteur (comme switch)</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CASE pays
+   WHEN 'USA' THEN SET livraison='2 jours';
+   WHEN 'Canada' THEN SET livraison='3 jours';
+   ELSE SET livraison='5 jours';
+END CASE;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ CASE sans sélecteur</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CASE
+   WHEN quantite &gt; 30 THEN SET msg='Quantité &gt; 30';
+   WHEN quantite = 30 THEN SET msg='Quantité = 30';
+   ELSE SET msg='Quantité &lt; 30';
+END CASE;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 6. Les boucles -->
+                <div class="lesson" id="a6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Les boucles (LOOP, WHILE, REPEAT)</span>
+                    </div>
+
+                    <p><strong>✔ 6.1 LOOP (comme "loop infini")</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>loop_label: LOOP
+   SET i = i + 1;
+
+   IF i = 10 THEN
+      LEAVE loop_label;
+   END IF;
+END LOOP;
+</code></pre>
+                    </div>
+
+                    <div class="tip">
+                        <strong>Rappels :</strong><br />
+                        → <code>LEAVE</code> = break<br />
+                        → <code>ITERATE</code> = continue
+                    </div>
+
+                    <p class="mt-small"><strong>✔ 6.2 WHILE</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>WHILE v1 &gt; 0 DO
+   SET v1 = v1 - 1;
+END WHILE;
+</code></pre>
+                    </div>
+
+                    <p class="mt-small"><strong>✔ 6.3 REPEAT (exécuté au moins 1 fois)</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>REPEAT
+   SET x = x + 1;
+UNTIL x &gt; p1
+END REPEAT;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Introduction aux curseurs -->
+                <div class="lesson" id="a7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Introduction aux curseurs (cursors)</span>
+                    </div>
+
+                    <p>
+                        Un curseur permet de parcourir ligne par ligne un résultat <code>SELECT</code>.
+                    </p>
+
+                    <p><strong>Étapes :</strong></p>
+                    <ol>
+                        <li>Déclarer le curseur</li>
+                        <li>Ouvrir</li>
+                        <li>Lire avec <code>FETCH</code></li>
+                        <li>Fermer</li>
+                    </ol>
+
+                    <p><strong>Exemple simple :</strong></p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE done INT DEFAULT 0;
+DECLARE v_nom VARCHAR(100);
+
+DECLARE cur CURSOR FOR SELECT nom FROM clients;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+OPEN cur;
+
+read_loop: LOOP
+    FETCH cur INTO v_nom;
+    IF done = 1 THEN
+        LEAVE read_loop;
+    END IF;
+    SELECT v_nom;
+END LOOP;
+
+CLOSE cur;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 8. Gestion d’erreurs -->
+                <div class="lesson" id="a8">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>8. Gestion d’erreurs (exceptions)</span>
+                    </div>
+
+                    <p>
+                        Une erreur peut :
+                    </p>
+                    <ul>
+                        <li>provoquer un <strong>EXIT</strong> (sortie du bloc)</li>
+                        <li>ou un <strong>CONTINUE</strong> (continuer malgré l’erreur)</li>
+                    </ul>
+
+                    <p><strong>Exemple :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE EXIT HANDLER FOR 1048
+SET message = 'Erreur : champ NOT NULL vide';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 9. Introduction à SIGNAL -->
+                <div class="lesson" id="a9">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>9. Introduction à SIGNAL</span>
+                    </div>
+
+                    <p>
+                        Permet de lever une exception personnalisée :
+                    </p>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>SIGNAL SQLSTATE '45000'
+SET MESSAGE_TEXT = 'Erreur personnalisée';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- Résumé débutant -->
+                <div class="recap">
+                    <div class="recap-title">
+                        🟦 Résumé Débutant
+                    </div>
+                    <p>
+                        À ce stade tu sais :
+                    </p>
+                    <ul>
+                        <li>✔ Utiliser <code>BEGIN/END</code></li>
+                        <li>✔ Déclarer des variables</li>
+                        <li>✔ Utiliser <code>IF / CASE</code></li>
+                        <li>✔ Faire des boucles</li>
+                        <li>✔ Manipuler des curseurs</li>
+                        <li>✔ Gérer les erreurs simples</li>
+                        <li>✔ Lever une erreur (<code>SIGNAL</code>)</li>
+                    </ul>
+                    <p class="mt-small">
+                        Tu peux maintenant lire et écrire des petits programmes MySQL structurés.
+                    </p>
+                </div>
+            </div>
+
+            <hr />
+
+            <!-- PARTIE B — Expert -->
+            <h2 class="section-title" id="partie-b">
+                <span class="label expert">Expert</span>
+                <span>🟪 PARTIE B — NIVEAU EXPERT</span>
+            </h2>
+
+            <div class="section">
+                <p>
+                    Maintenant, tu vas apprendre les techniques avancées utilisées dans les vraies applications.
+                </p>
+
+                <!-- 1. Portée des variables -->
+                <div class="lesson" id="b1">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>1. Portée des variables</span>
+                    </div>
+                    <p>
+                        Une variable :
+                    </p>
+                    <ul>
+                        <li>déclarée dans un bloc parent → disponible dans les blocs enfants</li>
+                        <li>déclarée dans un sous-bloc → invisible dans le bloc parent</li>
+                    </ul>
+                </div>
+
+                <!-- 2. Gestion avancée des erreurs -->
+                <div class="lesson" id="b2">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>2. Gestion avancée des erreurs</span>
+                    </div>
+                    <p>
+                        <strong>Types de conditions utilisables :</strong>
+                    </p>
+                    <ul>
+                        <li><code>SQLWARNING</code> → erreurs commençant par <code>01</code></li>
+                        <li><code>NOT FOUND</code> → erreurs commençant par <code>02</code> (curseurs)</li>
+                        <li><code>SQLEXCEPTION</code> → toutes les autres erreurs</li>
+                    </ul>
+                    <p class="mt-small">
+                        <strong>SQLSTATE spécifique :</strong> <code>DECLARE HANDLER FOR SQLSTATE '23000'</code><br />
+                        <strong>Code MySQL :</strong> <code>DECLARE HANDLER FOR 1048</code>
+                    </p>
+                </div>
+
+                <!-- 3. Exceptions nommées -->
+                <div class="lesson" id="b3">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>3. Exceptions nommées</span>
+                    </div>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE err_required CONDITION FOR SQLSTATE '45000';
+
+DECLARE EXIT HANDLER FOR err_required
+SET msg = 'Erreur de validation';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 4. RESIGNAL -->
+                <div class="lesson" id="b4">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>4. RESIGNAL (relancer une erreur)</span>
+                    </div>
+                    <p>
+                        Dans un handler, pour renvoyer l’erreur :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>RESIGNAL SET MESSAGE_TEXT = 'Division par zéro impossible';
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 5. Curseurs avancés — FOR UPDATE -->
+                <div class="lesson" id="b5">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>5. Curseurs avancés — verrouillage FOR UPDATE</span>
+                    </div>
+                    <p>
+                        Pour modifier les lignes parcourues :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE cur CURSOR FOR 
+SELECT id, adresse FROM clients FOR UPDATE;
+</code></pre>
+                    </div>
+
+                    <div class="callout">
+                        <div class="callout-title">
+                            ⚠ Attention
+                        </div>
+                        <p>
+                            <strong>FOR UPDATE</strong> est interdit si la requête comprend :
+                        </p>
+                        <ul>
+                            <li><code>DISTINCT</code></li>
+                            <li><code>GROUP BY</code></li>
+                            <li>agrégats</li>
+                            <li><code>UNION</code></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 6. Combiner curseurs + UPDATE -->
+                <div class="lesson" id="b6">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>6. Combiner curseurs + UPDATE</span>
+                    </div>
+
+                    <p><strong>Exemple réel :</strong></p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>IF UPPER(v_adresse) = 'AGADIR' THEN
+    UPDATE clients
+    SET adresse = 'GRANDE AGADIR'
+    WHERE id = v_id;
+END IF;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 7. Utilisation professionnelle de LOOP + cursor + exception -->
+                <div class="lesson" id="b7">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>7. Utilisation professionnelle de LOOP + cursor + exception</span>
+                    </div>
+                    <p>
+                        C’est le schéma officiel recommandé :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>DECLARE done INT DEFAULT 0;
+
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+OPEN cur;
+
+loop1: LOOP
+    FETCH cur INTO v1, v2;
+    IF done = 1 THEN LEAVE loop1; END IF;
+
+    -- traitement ici
+END LOOP;
+
+CLOSE cur;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 8. Événements programmés -->
+                <div class="lesson" id="b8">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>8. Événements programmés (cron MySQL)</span>
+                    </div>
+
+                    <p>
+                        MySQL peut exécuter du code automatiquement :
+                    </p>
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE EVENT nettoyage
+ON SCHEDULE EVERY 1 DAY
+DO
+DELETE FROM logs WHERE created_at &lt; NOW() - INTERVAL 30 DAY;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- 9. Exemple complet professionnel -->
+                <div class="lesson" id="b9">
+                    <div class="lesson-header">
+                        <span class="bullet">⭐</span>
+                        <span>9. Exemple complet professionnel</span>
+                    </div>
+
+                    <p>
+                        Un code MySQL combinant :
+                    </p>
+                    <ul>
+                        <li>variables</li>
+                        <li>curseur</li>
+                        <li>condition</li>
+                        <li>handler d’erreur</li>
+                        <li>mise à jour</li>
+                    </ul>
+
+                    <div class="code-block">
+                        <div class="code-label">SQL</div>
+<pre><code>CREATE PROCEDURE maj_clients()
+BEGIN
+DECLARE done INT DEFAULT 0;
+DECLARE v_id INT;
+DECLARE v_adresse VARCHAR(100);
+
+DECLARE cur CURSOR FOR SELECT id, adresse FROM clients;
+DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+OPEN cur;
+
+boucle: LOOP
+    FETCH cur INTO v_id, v_adresse;
+
+    IF done = 1 THEN LEAVE boucle; END IF;
+
+    IF UPPER(v_adresse) = 'CASA' THEN
+        UPDATE clients
+        SET adresse = 'CASABLANCA'
+        WHERE id = v_id;
+    END IF;
+
+END LOOP;
+
+CLOSE cur;
+END;
+</code></pre>
+                    </div>
+                </div>
+
+                <!-- Récap expert -->
+                <div class="recap">
+                    <div class="recap-title">
+                        🟧 RÉCAP EXPERT
+                    </div>
+                    <p>
+                        Tu maîtrises maintenant :
+                    </p>
+                    <ul>
+                        <li>✔ <code>IF / CASE / LOOP / WHILE / REPEAT</code></li>
+                        <li>✔ Détection d’erreurs (<code>HANDLER EXIT/CONTINUE</code>)</li>
+                        <li>✔ Lever des erreurs (<code>SIGNAL, RESIGNAL</code>)</li>
+                        <li>✔ Curseurs (lecture + mise à jour + verrouillage)</li>
+                        <li>✔ Structure propre de code procédural</li>
+                        <li>✔ Création de programmes robustes et maîtrisés</li>
+                    </ul>
+                    <p class="mt-small">
+                        Tu es prêt pour les procédures et fonctions MySQL (<strong>MODULE 3</strong>).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIDEPANEL -->
+        <aside class="side-panel">
+            <div class="side-chip">
+                <span class="icon">📚</span> Plan du module
+            </div>
+            <p class="side-subtitle">
+                Navigation rapide dans les notions de programmation procédurale MySQL.
+            </p>
+
+            <h3 class="side-heading">Partie A — Débutant</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#a1"><span class="toc-badge">A1</span> Pourquoi un langage procédural ?</a></li>
+                <li><a class="toc-link" href="#a2"><span class="toc-badge">A2</span> Bloc BEGIN / END</a></li>
+                <li><a class="toc-link" href="#a3"><span class="toc-badge">A3</span> Variables</a></li>
+                <li><a class="toc-link" href="#a4"><span class="toc-badge">A4</span> IF / ELSE</a></li>
+                <li><a class="toc-link" href="#a5"><span class="toc-badge">A5</span> CASE</a></li>
+                <li><a class="toc-link" href="#a6"><span class="toc-badge">A6</span> Boucles</a></li>
+                <li><a class="toc-link" href="#a7"><span class="toc-badge">A7</span> Curseurs (intro)</a></li>
+                <li><a class="toc-link" href="#a8"><span class="toc-badge">A8</span> Gestion d’erreurs</a></li>
+                <li><a class="toc-link" href="#a9"><span class="toc-badge">A9</span> SIGNAL</a></li>
+            </ul>
+
+            <h3 class="side-heading">Partie B — Expert</h3>
+            <ul class="toc-list">
+                <li><a class="toc-link" href="#b1"><span class="toc-badge">B1</span> Portée des variables</a></li>
+                <li><a class="toc-link" href="#b2"><span class="toc-badge">B2</span> Erreurs avancées</a></li>
+                <li><a class="toc-link" href="#b3"><span class="toc-badge">B3</span> Exceptions nommées</a></li>
+                <li><a class="toc-link" href="#b4"><span class="toc-badge">B4</span> RESIGNAL</a></li>
+                <li><a class="toc-link" href="#b5"><span class="toc-badge">B5</span> Curseurs FOR UPDATE</a></li>
+                <li><a class="toc-link" href="#b6"><span class="toc-badge">B6</span> Curseur + UPDATE</a></li>
+                <li><a class="toc-link" href="#b7"><span class="toc-badge">B7</span> Schéma pro LOOP + cursor</a></li>
+                <li><a class="toc-link" href="#b8"><span class="toc-badge">B8</span> Événements programmés</a></li>
+                <li><a class="toc-link" href="#b9"><span class="toc-badge">B9</span> Exemple complet</a></li>
+            </ul>
+        </aside>
+    </div>
+</div>
+
+<script>
+    // Surlignage de la section active dans la sidepanel
+    const tocLinks = document.querySelectorAll('.toc-link');
+    const lessons = Array.from(document.querySelectorAll('.lesson[id]'));
+
+    function onScroll() {
+        const offset = 120;
+        const y = window.scrollY + offset;
+        let currentId = null;
+
+        for (const section of lessons) {
+            const top = section.offsetTop;
+            const bottom = top + section.offsetHeight;
+            if (y >= top && y < bottom) {
+                currentId = section.id;
+                break;
+            }
+        }
+
+        tocLinks.forEach(link => {
+            const target = link.getAttribute('href').slice(1);
+            link.classList.toggle('active', target === currentId);
+        });
+    }
+
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+</script>
+</body>
+</html>
+
